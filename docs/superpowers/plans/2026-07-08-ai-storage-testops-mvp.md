@@ -83,7 +83,7 @@ Create tests:
 
 **Interfaces:**
 - Produces: MySQL tables used by all later backend tasks.
-- Produces: Demo data for WM6000 V2.0.3, WM6000 V2.0.4, competitor 2730AB, Node-1 through Node-4, and CDM/AS SSD/FIO cases.
+- Produces: Demo data for Project-A FW-v1, Project-A FW-v2, competitor Competitor-X, Node-1 through Node-4, and CDM/AS SSD/FIO cases.
 
 - [ ] **Step 1: Create schema SQL**
 
@@ -242,9 +242,9 @@ Add `db/storage_testops_seed.sql` with representative demo data:
 ```sql
 INSERT INTO storage_sample (project_name, soc, particle, capacity, fw_version, sample_code, batch_no, sample_type, remark)
 VALUES
-('WM6000','MT6762','N38B','256G','V2.0.3','WM6000-N38B-256G-203','B01','BASELINE','baseline version'),
-('WM6000','MT6762','N38B','256G','V2.0.4','WM6000-N38B-256G-204','B02','SELF','target version'),
-('2730AB','2730AB','AHGB','256G','V2.2.5','2730AB-AHGB-256G-225','C01','COMPETITOR','competitor sample');
+('Project-A','MT6762','Flash-X','256G','FW-v1','Project-A-Flash-X-256G-FW-v1','B01','BASELINE','baseline version'),
+('Project-A','MT6762','Flash-X','256G','FW-v2','Project-A-Flash-X-256G-FW-v2','B02','SELF','target version'),
+('Competitor-X','Competitor-X','Flash-Y','256G','FW-c1','Competitor-X-Flash-Y-256G-FW-c1','C01','COMPETITOR','competitor sample');
 
 INSERT INTO storage_test_node (node_code, node_name, ip_address, node_status, phone_status, adb_state, device_serial, current_sample_id, capabilities, last_heartbeat_time, last_adb_check_time)
 VALUES
@@ -528,10 +528,10 @@ from app.services.storage_agent_parser import StorageAgentParser
 
 def test_parse_create_task_with_node_and_suites():
     parser = StorageAgentParser()
-    result = parser.parse("Node-3 上挂了 WM6000 N38B 256G V2.0.4，跑 CDM、AS SSD、FIO clean dirty")
+    result = parser.parse("Node-3 涓婃寕浜?Project-A Flash-X 256G FW-v2锛岃窇 CDM銆丄S SSD銆丗IO clean dirty")
     assert result.intent == "CREATE_TEST_TASK"
-    assert result.projectName == "WM6000"
-    assert result.targetVersion == "V2.0.4"
+    assert result.projectName == "Project-A"
+    assert result.targetVersion == "FW-v2"
     assert result.nodeCode == "Node-3"
     assert result.testSuites == ["CDM", "AS_SSD", "FIO"]
     assert result.scenes == ["clean", "dirty"]
@@ -539,18 +539,18 @@ def test_parse_create_task_with_node_and_suites():
 
 def test_parse_report_with_baseline_and_competitor():
     parser = StorageAgentParser()
-    result = parser.parse("生成 WM6000 V2.0.4 对比 V2.0.3 和竞品 2730AB 的 CDM FIO 报告")
+    result = parser.parse("鐢熸垚 Project-A FW-v2 瀵规瘮 FW-v1 鍜岀珵鍝?Competitor-X 鐨?CDM FIO 鎶ュ憡")
     assert result.intent == "CREATE_REPORT"
-    assert result.projectName == "WM6000"
-    assert result.targetVersion == "V2.0.4"
-    assert result.baselineVersion == "V2.0.3"
-    assert result.competitor == "2730AB"
+    assert result.projectName == "Project-A"
+    assert result.targetVersion == "FW-v2"
+    assert result.baselineVersion == "FW-v1"
+    assert result.competitor == "Competitor-X"
     assert result.testSuites == ["CDM", "FIO"]
 
 
 def test_parse_metric_query():
     parser = StorageAgentParser()
-    result = parser.parse("CDM 顺序读最高速率是哪个样品 哪个版本")
+    result = parser.parse("CDM 椤哄簭璇绘渶楂橀€熺巼鏄摢涓牱鍝?鍝釜鐗堟湰")
     assert result.intent == "QUERY_RESULT"
     assert result.suite == "CDM"
     assert result.metricName == "SEQ R 1M Q8T1"
@@ -613,13 +613,13 @@ from app.schemas.storage_agent import StorageAgentParseResponse
 
 class StorageAgentParser:
     def parse(self, text: str) -> StorageAgentParseResponse:
-        normalized = text.replace("，", " ").replace(",", " ")
+        normalized = text.replace("锛?, " ").replace(",", " ")
         intent = self._detect_intent(normalized)
         suites = self._extract_suites(normalized)
         scenes = self._extract_scenes(normalized)
         project = self._extract_project(normalized)
         versions = re.findall(r"V\d+(?:\.\d+)+", normalized, flags=re.IGNORECASE)
-        node_match = re.search(r"Node[- ]?(\d+)|节点\s*(\d+)", normalized, flags=re.IGNORECASE)
+        node_match = re.search(r"Node[- ]?(\d+)|鑺傜偣\s*(\d+)", normalized, flags=re.IGNORECASE)
 
         result = StorageAgentParseResponse(
             intent=intent,
@@ -638,8 +638,8 @@ class StorageAgentParser:
 
         if intent == "QUERY_RESULT":
             result.suite = "CDM" if "CDM" in normalized.upper() else None
-            result.metricName = "SEQ R 1M Q8T1" if "顺序读" in normalized or "seq" in normalized.lower() else None
-            result.aggregation = "MAX" if "最高" in normalized or "最大" in normalized else "TOP"
+            result.metricName = "SEQ R 1M Q8T1" if "椤哄簭璇? in normalized or "seq" in normalized.lower() else None
+            result.aggregation = "MAX" if "鏈€楂? in normalized or "鏈€澶? in normalized else "TOP"
             result.rankLimit = 1
             result.dimensions = ["sample", "version", "scene"]
 
@@ -647,9 +647,9 @@ class StorageAgentParser:
         return result
 
     def _detect_intent(self, text: str) -> str:
-        if any(word in text for word in ["最高", "最低", "哪个样品", "哪个版本", "Top", "top"]):
+        if any(word in text for word in ["鏈€楂?, "鏈€浣?, "鍝釜鏍峰搧", "鍝釜鐗堟湰", "Top", "top"]):
             return "QUERY_RESULT"
-        if any(word in text for word in ["报告", "对比", "竞品"]):
+        if any(word in text for word in ["鎶ュ憡", "瀵规瘮", "绔炲搧"]):
             return "CREATE_REPORT"
         return "CREATE_TEST_TASK"
 
@@ -674,17 +674,17 @@ class StorageAgentParser:
         return scenes or ["clean"]
 
     def _extract_project(self, text: str):
-        match = re.search(r"(WM\d+|2730AB)", text, flags=re.IGNORECASE)
+        match = re.search(r"(WM\d+|Competitor-X)", text, flags=re.IGNORECASE)
         return match.group(1).upper() if match else None
 
     def _extract_competitor(self, text: str):
-        if "竞品" not in text:
+        if "绔炲搧" not in text:
             return None
-        match = re.search(r"竞品\s*([A-Za-z0-9]+)", text)
-        return match.group(1).upper() if match else "2730AB"
+        match = re.search(r"绔炲搧\s*([A-Za-z0-9]+)", text)
+        return match.group(1).upper() if match else "Competitor-X"
 
     def _extract_particle(self, text: str):
-        match = re.search(r"\b(N\d+B|AHGB)\b", text, flags=re.IGNORECASE)
+        match = re.search(r"\b(N\d+B|Flash-Y)\b", text, flags=re.IGNORECASE)
         return match.group(1).upper() if match else None
 
     def _extract_capacity(self, text: str):
@@ -938,7 +938,7 @@ uvicorn app.main:app --reload --port 8090
 Start Spring Boot, then run:
 
 ```powershell
-Invoke-RestMethod -Uri http://localhost:8080/springbootarkc6v1u/storage-agent/parse -Method Post -ContentType 'application/json' -Body '{"text":"CDM 顺序读最高速率是哪个样品 哪个版本"}'
+Invoke-RestMethod -Uri http://localhost:8080/springbootarkc6v1u/storage-agent/parse -Method Post -ContentType 'application/json' -Body '{"text":"CDM 椤哄簭璇绘渶楂橀€熺巼鏄摢涓牱鍝?鍝釜鐗堟湰"}'
 ```
 
 Expected: response `data.intent` is `QUERY_RESULT`.
@@ -1012,16 +1012,16 @@ In `StorageMockRunnerServiceImpl`, before running:
 ```java
 private void validateNode(StorageTestNodeEntity node) {
     if (node == null) {
-        throw new IllegalArgumentException("节点不存在");
+        throw new IllegalArgumentException("鑺傜偣涓嶅瓨鍦?);
     }
     if (!"IDLE".equals(node.getNodeStatus())) {
-        throw new IllegalArgumentException("节点不可用: 当前状态为 " + node.getNodeStatus());
+        throw new IllegalArgumentException("鑺傜偣涓嶅彲鐢? 褰撳墠鐘舵€佷负 " + node.getNodeStatus());
     }
     if (!"CONNECTED".equals(node.getPhoneStatus())) {
-        throw new IllegalArgumentException("节点不可用: 手机未连接");
+        throw new IllegalArgumentException("鑺傜偣涓嶅彲鐢? 鎵嬫満鏈繛鎺?);
     }
     if (!"DEVICE".equals(node.getAdbState())) {
-        throw new IllegalArgumentException("节点不可用: ADB 状态为 " + node.getAdbState());
+        throw new IllegalArgumentException("鑺傜偣涓嶅彲鐢? ADB 鐘舵€佷负 " + node.getAdbState());
     }
 }
 ```
@@ -1089,7 +1089,7 @@ Expected JSON response from run:
 Run:
 
 ```powershell
-Invoke-RestMethod -Uri http://localhost:8080/springbootarkc6v1u/storage-tasks/create -Method Post -ContentType 'application/json' -Body '{"taskName":"WM6000 V2.0.4 CDM FIO","projectName":"WM6000","targetVersion":"V2.0.4","sampleId":2,"nodeId":3,"testSuites":["CDM","FIO"],"scenes":["clean","dirty"]}'
+Invoke-RestMethod -Uri http://localhost:8080/springbootarkc6v1u/storage-tasks/create -Method Post -ContentType 'application/json' -Body '{"taskName":"Project-A FW-v2 CDM FIO","projectName":"Project-A","targetVersion":"FW-v2","sampleId":2,"nodeId":3,"testSuites":["CDM","FIO"],"scenes":["clean","dirty"]}'
 Invoke-RestMethod -Uri http://localhost:8080/springbootarkc6v1u/storage-tasks/1/run -Method Post
 Invoke-RestMethod -Uri http://localhost:8080/springbootarkc6v1u/storage-tasks/1/results -Method Get
 ```
@@ -1117,7 +1117,7 @@ git commit -m "feat: add storage mock task execution"
 **Interfaces:**
 - Produces: `POST /storage-metrics/query`
 - Consumes: `storage_test_result`, `storage_sample`
-- Answers: "CDM 顺序读最高速率是哪个样品、哪个版本"
+- Answers: "CDM 椤哄簭璇绘渶楂橀€熺巼鏄摢涓牱鍝併€佸摢涓増鏈?
 
 - [ ] **Step 1: Create DTOs**
 
@@ -1173,8 +1173,7 @@ Service behavior:
 Answer format:
 
 ```text
-CDM SEQ R 1M Q8T1 最高的是样品 WM6000-N38B-256G-204，版本 V2.0.4，在 clean 场景下平均值为 340.460 MB/s。
-```
+CDM SEQ R 1M Q8T1 鏈€楂樼殑鏄牱鍝?Project-A-Flash-X-256G-FW-v2锛岀増鏈?FW-v2锛屽湪 clean 鍦烘櫙涓嬪钩鍧囧€间负 340.460 MB/s銆?```
 
 - [ ] **Step 3: Add controller**
 
@@ -1237,26 +1236,26 @@ git commit -m "feat: add storage metric query"
 
 - [ ] **Step 1: Create simple template**
 
-Create `src/main/resources/templates/storage_performance_report_template.xlsx` manually with one sheet named `性能报告`.
+Create `src/main/resources/templates/storage_performance_report_template.xlsx` manually with one sheet named `鎬ц兘鎶ュ憡`.
 
 Required cells:
 
-- `A1`: `AI 存储性能测试报告`
-- `A3`: `报告名称`
+- `A1`: `AI 瀛樺偍鎬ц兘娴嬭瘯鎶ュ憡`
+- `A3`: `鎶ュ憡鍚嶇О`
 - `B3`: blank
-- `A4`: `报告类型`
+- `A4`: `鎶ュ憡绫诲瀷`
 - `B4`: blank
-- `A6`: `数据集`
-- `A10`: `测试套件`
-- `B10`: `场景`
-- `C10`: `指标`
-- `D10`: `目标平均值`
-- `E10`: `基准平均值`
-- `F10`: `差异`
-- `G10`: `状态`
-- `A30`: `异常项`
-- `A45`: `人工备注`
-- `A55`: `总结`
+- `A6`: `鏁版嵁闆哷
+- `A10`: `娴嬭瘯濂椾欢`
+- `B10`: `鍦烘櫙`
+- `C10`: `鎸囨爣`
+- `D10`: `鐩爣骞冲潎鍊糮
+- `E10`: `鍩哄噯骞冲潎鍊糮
+- `F10`: `宸紓`
+- `G10`: `鐘舵€乣
+- `A30`: `寮傚父椤筦
+- `A45`: `浜哄伐澶囨敞`
+- `A55`: `鎬荤粨`
 
 - [ ] **Step 2: Create report request DTO**
 
@@ -1314,7 +1313,7 @@ public void download(@PathVariable("id") Long id, HttpServletResponse response)
 - [ ] **Step 5: Verify**
 
 ```powershell
-Invoke-RestMethod -Uri http://localhost:8080/springbootarkc6v1u/storage-reports/create -Method Post -ContentType 'application/json' -Body '{"reportName":"WM6000 V2.0.4 对比报告","reportType":"COMPARISON","sampleIds":[2,1,3]}'
+Invoke-RestMethod -Uri http://localhost:8080/springbootarkc6v1u/storage-reports/create -Method Post -ContentType 'application/json' -Body '{"reportName":"Project-A FW-v2 瀵规瘮鎶ュ憡","reportType":"COMPARISON","sampleIds":[2,1,3]}'
 Invoke-RestMethod -Uri http://localhost:8080/springbootarkc6v1u/storage-reports/1/generate -Method Post
 ```
 
@@ -1348,46 +1347,31 @@ git commit -m "feat: add storage report export"
 Create `docs/demo/AI-Storage-TestOps-Demo-Script.md` with:
 
 ```markdown
-# AI 存储性能 TestOps Demo 脚本
+# AI 瀛樺偍鎬ц兘 TestOps Demo 鑴氭湰
 
-## 演示 A：自然语言创建测试任务
+## 婕旂ず A锛氳嚜鐒惰瑷€鍒涘缓娴嬭瘯浠诲姟
 
-输入：
+杈撳叆锛?
+> Node-3 涓婃寕浜?Project-A Flash-X 256G FW-v2锛岃窇 CDM銆丄S SSD銆丗IO clean dirty銆?
+棰勬湡锛?
+- Agent 璇嗗埆 `CREATE_TEST_TASK`
+- 鎻愬彇椤圭洰銆佺増鏈€佽妭鐐广€佹祴璇曞浠躲€佸満鏅?- 骞冲彴妫€鏌?Node-3锛氳妭鐐圭┖闂层€佹墜鏈哄凡杩炴帴銆丄DB 涓?DEVICE
+- 鍒涘缓浠诲姟
+- Mock Runner 鐢熸垚缁撴灉
 
-> Node-3 上挂了 WM6000 N38B 256G V2.0.4，跑 CDM、AS SSD、FIO clean dirty。
-
-预期：
-
-- Agent 识别 `CREATE_TEST_TASK`
-- 提取项目、版本、节点、测试套件、场景
-- 平台检查 Node-3：节点空闲、手机已连接、ADB 为 DEVICE
-- 创建任务
-- Mock Runner 生成结果
-
-## 演示 B：智能测试数据问答
-
-输入：
-
-> CDM 顺序读最高速率是哪个样品，哪个版本下的？
-
-预期：
-
-- Agent 识别 `QUERY_RESULT`
-- 平台查询 `storage_test_result`
-- 返回最高值对应样品、版本、场景和指标值
-
-## 演示 C：生成对比报告
-
-输入：
-
-> 生成 WM6000 V2.0.4、V2.0.3 和竞品 2730AB 的 CDM、AS SSD、FIO 对比报告。
-
-预期：
-
-- Agent 识别 `CREATE_REPORT`
-- 平台创建报告数据集
-- 报告生成器计算均值、差异和异常项
-- 导出 Excel
+## 婕旂ず B锛氭櫤鑳芥祴璇曟暟鎹棶绛?
+杈撳叆锛?
+> CDM 椤哄簭璇绘渶楂橀€熺巼鏄摢涓牱鍝侊紝鍝釜鐗堟湰涓嬬殑锛?
+棰勬湡锛?
+- Agent 璇嗗埆 `QUERY_RESULT`
+- 骞冲彴鏌ヨ `storage_test_result`
+- 杩斿洖鏈€楂樺€煎搴旀牱鍝併€佺増鏈€佸満鏅拰鎸囨爣鍊?
+## 婕旂ず C锛氱敓鎴愬姣旀姤鍛?
+杈撳叆锛?
+> 鐢熸垚 Project-A FW-v2銆乂2.0.3 鍜岀珵鍝?Competitor-X 鐨?CDM銆丄S SSD銆丗IO 瀵规瘮鎶ュ憡銆?
+棰勬湡锛?
+- Agent 璇嗗埆 `CREATE_REPORT`
+- 骞冲彴鍒涘缓鎶ュ憡鏁版嵁闆?- 鎶ュ憡鐢熸垚鍣ㄨ绠楀潎鍊笺€佸樊寮傚拰寮傚父椤?- 瀵煎嚭 Excel
 ```
 
 - [ ] **Step 2: Verify full flow**

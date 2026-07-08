@@ -1,19 +1,14 @@
-# 存储性能 TestOps 数据库设计
-
-本文对应 `db/storage_testops_schema.sql` 与 `db/storage_testops_seed.sql`，用于后续的样例、节点、任务、结果、报表和 Agent 解析记录。
-
-## 1. 表清单
-
-- `storage_sample`：样品表
-- `storage_test_node`：测试节点表
-- `storage_test_case`：测试用例表
-- `storage_test_task`：测试任务表
-- `storage_test_result`：测试结果表
-- `storage_test_report`：报表表
-- `storage_report_dataset`：报表数据集表
-- `storage_agent_request`：Agent 解析记录表
-
-## 2. 核心关系
+# 瀛樺偍鎬ц兘 TestOps 鏁版嵁搴撹璁?
+鏈枃瀵瑰簲 `db/storage_testops_schema.sql` 涓?`db/storage_testops_seed.sql`锛岀敤浜庡悗缁殑鏍蜂緥銆佽妭鐐广€佷换鍔°€佺粨鏋溿€佹姤琛ㄥ拰 Agent 瑙ｆ瀽璁板綍銆?
+## 1. 琛ㄦ竻鍗?
+- `storage_sample`锛氭牱鍝佽〃
+- `storage_test_node`锛氭祴璇曡妭鐐硅〃
+- `storage_test_case`锛氭祴璇曠敤渚嬭〃
+- `storage_test_task`锛氭祴璇曚换鍔¤〃
+- `storage_test_result`锛氭祴璇曠粨鏋滆〃
+- `storage_test_report`锛氭姤琛ㄨ〃
+- `storage_report_dataset`锛氭姤琛ㄦ暟鎹泦琛?- `storage_agent_request`锛欰gent 瑙ｆ瀽璁板綍琛?
+## 2. 鏍稿績鍏崇郴
 
 ```mermaid
 erDiagram
@@ -26,64 +21,40 @@ erDiagram
     storage_sample ||--o{ storage_report_dataset : selected_as
 ```
 
-## 3. 状态枚举
+## 3. 鐘舵€佹灇涓?
+### 3.1 鑺傜偣鐘舵€?
+- `IDLE`锛氱┖闂?- `BUSY`锛氳繍琛屼腑
+- `OFFLINE`锛氱绾?
+### 3.2 鎵嬫満杩炴帴鐘舵€?
+- `CONNECTED`锛氬凡杩炴帴
+- `NOT_CONNECTED`锛氭湭杩炴帴
+- `ERROR`锛氳繛鎺ュ紓甯?
+### 3.3 ADB 鐘舵€?
+- `DEVICE`锛氳澶囧彲鐢?- `UNAUTHORIZED`锛氭湭鎺堟潈
+- `OFFLINE`锛欰DB offline
+- `NOT_FOUND`锛氭湭鍙戠幇璁惧
 
-### 3.1 节点状态
+### 3.4 浠诲姟鐘舵€?
+- `DRAFT`锛氬緟纭
+- `CONFIRMED`锛氬凡纭
+- `QUEUED`锛氬緟鎵ц
+- `RUNNING`锛氭墽琛屼腑
+- `COMPLETED`锛氬凡瀹屾垚
+- `FAILED`锛氬け璐?
+### 3.5 缁撴灉鐘舵€?
+- `PASS`锛氶€氳繃
+- `WARNING`锛氳鍛?- `FAIL`锛氬け璐?- `N_A`锛氭棤娉曡绠楁垨鏁版嵁涓嶈冻
 
-- `IDLE`：空闲
-- `BUSY`：运行中
-- `OFFLINE`：离线
+### 3.6 鎶ュ憡鐘舵€?
+- `DRAFT`锛氳崏绋?- `GENERATING`锛氱敓鎴愪腑
+- `COMPLETED`锛氬凡瀹屾垚
+- `FAILED`锛氬け璐?
+## 4. 璁捐璇存槑
 
-### 3.2 手机连接状态
-
-- `CONNECTED`：已连接
-- `NOT_CONNECTED`：未连接
-- `ERROR`：连接异常
-
-### 3.3 ADB 状态
-
-- `DEVICE`：设备可用
-- `UNAUTHORIZED`：未授权
-- `OFFLINE`：ADB offline
-- `NOT_FOUND`：未发现设备
-
-### 3.4 任务状态
-
-- `DRAFT`：待确认
-- `CONFIRMED`：已确认
-- `QUEUED`：待执行
-- `RUNNING`：执行中
-- `COMPLETED`：已完成
-- `FAILED`：失败
-
-### 3.5 结果状态
-
-- `PASS`：通过
-- `WARNING`：警告
-- `FAIL`：失败
-- `N_A`：无法计算或数据不足
-
-### 3.6 报告状态
-
-- `DRAFT`：草稿
-- `GENERATING`：生成中
-- `COMPLETED`：已完成
-- `FAILED`：失败
-
-## 4. 设计说明
-
-1. 报表模块直接依赖 `storage_test_result`，不依赖任务执行过程本身。
-2. 任务表负责执行流程，结果表负责沉淀可查询数据。
-3. 节点表保存节点状态、手机连接状态和 ADB 状态，便于调度与校验。
-4. 种子数据包含：
-   - WM6000 V2.0.3 baseline
-   - WM6000 V2.0.4 target
-   - 2730AB competitor
-   - Node-1 到 Node-4
-   - CDM、AS SSD、FIO 的 14 条测试用例
-
-## 5. Seed 数据校验点
-
-- `storage_sample`：3 条
-- `storage_test_node`：4 条
-- `storage_test_case`：14 条
+1. 鎶ヨ〃妯″潡鐩存帴渚濊禆 `storage_test_result`锛屼笉渚濊禆浠诲姟鎵ц杩囩▼鏈韩銆?2. 浠诲姟琛ㄨ礋璐ｆ墽琛屾祦绋嬶紝缁撴灉琛ㄨ礋璐ｆ矇娣€鍙煡璇㈡暟鎹€?3. 鑺傜偣琛ㄤ繚瀛樿妭鐐圭姸鎬併€佹墜鏈鸿繛鎺ョ姸鎬佸拰 ADB 鐘舵€侊紝渚夸簬璋冨害涓庢牎楠屻€?4. 绉嶅瓙鏁版嵁鍖呭惈锛?   - Project-A FW-v1 baseline
+   - Project-A FW-v2 target
+   - Competitor-X competitor
+   - Node-1 鍒?Node-4
+   - CDM銆丄S SSD銆丗IO 鐨?14 鏉℃祴璇曠敤渚?
+## 5. Seed 鏁版嵁鏍￠獙鐐?
+- `storage_sample`锛? 鏉?- `storage_test_node`锛? 鏉?- `storage_test_case`锛?4 鏉?

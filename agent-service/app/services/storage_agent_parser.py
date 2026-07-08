@@ -11,18 +11,16 @@ class StorageAgentParser:
         suites = self._extract_suites(normalized)
         scenes = self._extract_scenes(normalized)
         versions = self._extract_versions(normalized)
-        project = self._extract_project(normalized)
-        node_code = self._extract_node_code(normalized)
 
         result = StorageAgentParseResponse(
             intent=intent,
-            projectName=project,
+            projectName=self._extract_project(normalized),
             targetVersion=versions[0] if versions else None,
             baselineVersion=versions[1] if len(versions) > 1 else None,
             competitor=self._extract_competitor(normalized),
             particle=self._extract_particle(normalized),
             capacity=self._extract_capacity(normalized),
-            nodeCode=node_code,
+            nodeCode=self._extract_node_code(normalized),
             testSuites=suites,
             scenes=scenes,
             reportTypes=["single", "comparison"] if intent == "CREATE_REPORT" else [],
@@ -51,7 +49,7 @@ class StorageAgentParser:
         upper = text.upper()
         if any(keyword in text for keyword in ["最高", "最低", "哪个样品", "哪个版本"]) or "TOP" in upper:
             return "QUERY_RESULT"
-        if any(keyword in text for keyword in ["报告", "对比", "竞品"]) or "REPORT" in upper:
+        if any(keyword in text for keyword in ["报告", "对比", "竞品"]) or "REPORT" in upper or "COMPARE" in upper:
             return "CREATE_REPORT"
         return "CREATE_TEST_TASK"
 
@@ -76,11 +74,11 @@ class StorageAgentParser:
         return scenes
 
     def _extract_versions(self, text: str) -> List[str]:
-        return re.findall(r"V\d+(?:\.\d+)+", text, flags=re.IGNORECASE)
+        return re.findall(r"(?:V\d+(?:\.\d+)+|FW-[A-Za-z0-9-]+)", text, flags=re.IGNORECASE)
 
     def _extract_project(self, text: str):
-        match = re.search(r"(WM\d+|2730AB)", text, flags=re.IGNORECASE)
-        return match.group(1).upper() if match else None
+        match = re.search(r"(Project-[A-Za-z0-9]+|WM\d+|Competitor-X)", text, flags=re.IGNORECASE)
+        return match.group(1) if match else None
 
     def _extract_node_code(self, text: str):
         match = re.search(r"\bNode[- ]?(\d+)\b|节点\s*(\d+)", text, flags=re.IGNORECASE)
@@ -93,12 +91,12 @@ class StorageAgentParser:
         lower = text.lower()
         if "竞品" not in text and "competitor" not in lower:
             return None
-        match = re.search(r"(?:竞品|competitor)\s*([A-Za-z0-9]+)", text, flags=re.IGNORECASE)
-        return match.group(1).upper() if match else "2730AB"
+        match = re.search(r"(?:竞品|competitor)\s*([A-Za-z0-9-]+)", text, flags=re.IGNORECASE)
+        return match.group(1) if match else "Competitor-X"
 
     def _extract_particle(self, text: str):
-        match = re.search(r"\b(N\d+B|AHGB)\b", text, flags=re.IGNORECASE)
-        return match.group(1).upper() if match else None
+        match = re.search(r"\b(Flash-[A-Za-z0-9]+|N\d+B)\b", text, flags=re.IGNORECASE)
+        return match.group(1) if match else None
 
     def _extract_capacity(self, text: str):
         match = re.search(r"\b(\d+\s*G)\b", text, flags=re.IGNORECASE)
@@ -106,9 +104,9 @@ class StorageAgentParser:
 
     def _extract_metric_name(self, text: str):
         lower = text.lower()
-        if any(keyword in text for keyword in ["顺序读", "顺序读取"]) or "seq read" in lower:
+        if "顺序读" in text or "seq read" in lower:
             return "SEQ R 1M Q8T1"
-        if any(keyword in text for keyword in ["顺序写", "顺序写入"]) or "seq write" in lower:
+        if "顺序写" in text or "seq write" in lower:
             return "SEQ W 1M Q8T1"
         if "4k" in lower or "随机" in text:
             return "RND R 4K Q32T16"

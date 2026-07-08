@@ -1,33 +1,27 @@
-# AI 存储性能测试管理平台技术设计
+# AI 瀛樺偍鎬ц兘娴嬭瘯绠＄悊骞冲彴鎶€鏈璁?
+## 1. 姒傝堪
 
-## 1. 概述
+鏈枃妗ｆ弿杩板浣曞皢鐜版湁 Spring Boot 娴嬭瘯绠＄悊绯荤粺鍗囩骇涓?AI 杈呭姪鐨勫瓨鍌ㄦ€ц兘 TestOps 骞冲彴銆?
+绗竴鐗堥噸鐐瑰疄鐜帮細
 
-本文档描述如何将现有 Spring Boot 测试管理系统升级为 AI 辅助的存储性能 TestOps 平台。
+- 鑷劧璇█浠诲姟涓庢姤鍛婂叆鍙?- 缁撴瀯鍖栨祴璇曚换鍔¤崏绋?- 缁撴瀯鍖栨姤鍛婅崏绋?- 瀛樺偍鏍峰搧銆佽妭鐐广€佺敤渚嬨€佷换鍔°€佺粨鏋滃拰鎶ュ憡妯″瀷
+- Mock Runner 妯℃嫙鎵ц
+- 鍩轰簬鏍囧噯鍖栨祴璇曠粨鏋滅殑鐙珛鎶ュ憡鐢熸垚
+- 鍩虹娴嬭瘯鏁版嵁闂瓟
+- Excel 瀵煎嚭
 
-第一版重点实现：
-
-- 自然语言任务与报告入口
-- 结构化测试任务草稿
-- 结构化报告草稿
-- 存储样品、节点、用例、任务、结果和报告模型
-- Mock Runner 模拟执行
-- 基于标准化测试结果的独立报告生成
-- 基础测试数据问答
-- Excel 导出
-
-设计上明确区分“测试执行”和“报告生成”。报告可以来自单个任务、多个任务、历史数据、竞品数据或手动导入数据，不强绑定某一次执行。
-
-## 2. 总体架构
+璁捐涓婃槑纭尯鍒嗏€滄祴璇曟墽琛屸€濆拰鈥滄姤鍛婄敓鎴愨€濄€傛姤鍛婂彲浠ユ潵鑷崟涓换鍔°€佸涓换鍔°€佸巻鍙叉暟鎹€佺珵鍝佹暟鎹垨鎵嬪姩瀵煎叆鏁版嵁锛屼笉寮虹粦瀹氭煇涓€娆℃墽琛屻€?
+## 2. 鎬讳綋鏋舵瀯
 
 ```mermaid
 flowchart LR
-    User["测试工程师"]
-    UI["Vue / Element UI 管理后台"]
-    Spring["Spring Boot 平台"]
+    User["娴嬭瘯宸ョ▼甯?]
+    UI["Vue / Element UI 绠＄悊鍚庡彴"]
+    Spring["Spring Boot 骞冲彴"]
     DB["MySQL"]
-    Agent["FastAPI Agent 服务"]
+    Agent["FastAPI Agent 鏈嶅姟"]
     Runner["Mock Runner"]
-    Report["报告生成器"]
+    Report["鎶ュ憡鐢熸垚鍣?]
 
     User --> UI
     UI --> Spring
@@ -41,156 +35,124 @@ flowchart LR
     Report --> UI
 ```
 
-## 3. 模块职责
+## 3. 妯″潡鑱岃矗
 
-### 3.1 前端管理后台
+### 3.1 鍓嶇绠＄悊鍚庡彴
 
-职责：
+鑱岃矗锛?
+- 鑷劧璇█杈撳叆
+- 娴嬭瘯浠诲姟鑽夌纭
+- 鎶ュ憡鑽夌纭
+- 鏍峰搧銆佽妭鐐广€佺敤渚嬬鐞?- 浠诲姟鐘舵€佸睍绀?- 鎶ュ憡棰勮鍜?Excel 涓嬭浇
 
-- 自然语言输入
-- 测试任务草稿确认
-- 报告草稿确认
-- 样品、节点、用例管理
-- 任务状态展示
-- 报告预览和 Excel 下载
+### 3.2 Spring Boot 骞冲彴
 
-### 3.2 Spring Boot 平台
+鑱岃矗锛?
+- 鎻愪緵鍙俊涓氬姟 API
+- 鏁版嵁搴撹闂?- 娴嬭瘯浠诲姟鍒涘缓鍜岀姸鎬佹祦杞?- 鑺傜偣銆佹墜鏈鸿繛鎺ャ€丄DB 鐘舵€佹牎楠?- Mock Runner 璋冨害
+- 娴嬭瘯缁撴灉鏌ヨ
+- 鎶ュ憡鐢熸垚
+- Excel 鏂囦欢涓嬭浇
 
-职责：
+### 3.3 FastAPI Agent 鏈嶅姟
 
-- 提供可信业务 API
-- 数据库访问
-- 测试任务创建和状态流转
-- 节点、手机连接、ADB 状态校验
-- Mock Runner 调度
-- 测试结果查询
-- 报告生成
-- Excel 文件下载
-
-### 3.3 FastAPI Agent 服务
-
-职责：
-
-- 意图识别
-- 字段抽取
-- 缺失字段识别
-- 输出结构化 JSON
-- 用例和节点推荐规则
-- 测试数据查询意图解析
-- 后续接入 LLM、RAG 和工具调用
-
+鑱岃矗锛?
+- 鎰忓浘璇嗗埆
+- 瀛楁鎶藉彇
+- 缂哄け瀛楁璇嗗埆
+- 杈撳嚭缁撴瀯鍖?JSON
+- 鐢ㄤ緥鍜岃妭鐐规帹鑽愯鍒?- 娴嬭瘯鏁版嵁鏌ヨ鎰忓浘瑙ｆ瀽
+- 鍚庣画鎺ュ叆 LLM銆丷AG 鍜屽伐鍏疯皟鐢?
 ### 3.4 Mock Runner
 
-职责：
+鑱岃矗锛?
+- 妯℃嫙鑺傜偣鎵ц
+- 鐢熸垚澶氳疆鎬ц兘鏁版嵁
+- 鐢熸垚 pass/warning/fail 缁撴灉
+- 鐢熸垚鎵ц鏃ュ織
+- 鍐欏叆鏍囧噯鍖栫粨鏋滆〃
+- 妯℃嫙澶辫触鍦烘櫙
 
-- 模拟节点执行
-- 生成多轮性能数据
-- 生成 pass/warning/fail 结果
-- 生成执行日志
-- 写入标准化结果表
-- 模拟失败场景
+### 3.5 鎶ュ憡鐢熸垚鍣?
+鑱岃矗锛?
+- 鏌ヨ鎶ュ憡鏁版嵁闆?- 鏌ヨ鏍囧噯鍖栨祴璇曠粨鏋?- 璁＄畻骞冲潎鍊煎拰宸紓鐧惧垎姣?- 搴旂敤 warning/fail 闃堝€?- 鐢熸垚缃戦〉棰勮 JSON
+- 浣跨敤 Apache POI 濉厖 Excel 妯℃澘
+- 淇濆瓨鎶ュ憡鏂囦欢璺緞
 
-### 3.5 报告生成器
+## 4. 鏍稿績娴佺▼
 
-职责：
-
-- 查询报告数据集
-- 查询标准化测试结果
-- 计算平均值和差异百分比
-- 应用 warning/fail 阈值
-- 生成网页预览 JSON
-- 使用 Apache POI 填充 Excel 模板
-- 保存报告文件路径
-
-## 4. 核心流程
-
-### 4.1 创建测试任务
+### 4.1 鍒涘缓娴嬭瘯浠诲姟
 
 ```mermaid
 sequenceDiagram
-    participant U as 用户
-    participant FE as 前端
+    participant U as 鐢ㄦ埛
+    participant FE as 鍓嶇
     participant BE as Spring Boot
-    participant AG as Agent 服务
+    participant AG as Agent 鏈嶅姟
     participant DB as MySQL
     participant MR as Mock Runner
 
-    U->>FE: 输入自然语言测试需求
-    FE->>BE: POST /api/storage-agent/parse
-    BE->>AG: 解析需求
-    AG-->>BE: 返回结构化草稿
-    BE->>DB: 查询样品、节点、用例
-    BE-->>FE: 返回草稿、推荐项、缺失字段
-    U->>FE: 确认任务
-    FE->>BE: 创建/确认任务
-    BE->>DB: 保存任务
-    FE->>BE: 触发执行
-    BE->>MR: 执行模拟任务
-    MR->>DB: 写入结果和日志
-    MR-->>BE: 执行完成
-    BE-->>FE: 返回最新任务状态
-```
+    U->>FE: 杈撳叆鑷劧璇█娴嬭瘯闇€姹?    FE->>BE: POST /api/storage-agent/parse
+    BE->>AG: 瑙ｆ瀽闇€姹?    AG-->>BE: 杩斿洖缁撴瀯鍖栬崏绋?    BE->>DB: 鏌ヨ鏍峰搧銆佽妭鐐广€佺敤渚?    BE-->>FE: 杩斿洖鑽夌銆佹帹鑽愰」銆佺己澶卞瓧娈?    U->>FE: 纭浠诲姟
+    FE->>BE: 鍒涘缓/纭浠诲姟
+    BE->>DB: 淇濆瓨浠诲姟
+    FE->>BE: 瑙﹀彂鎵ц
+    BE->>MR: 鎵ц妯℃嫙浠诲姟
+    MR->>DB: 鍐欏叆缁撴灉鍜屾棩蹇?    MR-->>BE: 鎵ц瀹屾垚
+    BE-->>FE: 杩斿洖鏈€鏂颁换鍔＄姸鎬?```
 
-### 4.2 生成报告
+### 4.2 鐢熸垚鎶ュ憡
 
 ```mermaid
 sequenceDiagram
-    participant U as 用户
-    participant FE as 前端
+    participant U as 鐢ㄦ埛
+    participant FE as 鍓嶇
     participant BE as Spring Boot
-    participant AG as Agent 服务
+    participant AG as Agent 鏈嶅姟
     participant DB as MySQL
-    participant RG as 报告生成器
-
-    U->>FE: 输入对比报告需求
-    FE->>BE: POST /api/storage-agent/parse
-    BE->>AG: 解析报告意图
-    AG-->>BE: 返回报告草稿
-    BE-->>FE: 返回数据集草稿
-    U->>FE: 确认或修改数据集
-    FE->>BE: 创建报告
-    BE->>DB: 保存报告和数据集
-    FE->>BE: 生成报告
-    BE->>RG: 生成预览和 Excel
-    RG->>DB: 查询标准化结果
-    RG->>DB: 保存报告输出
-    BE-->>FE: 返回预览和下载地址
+    participant RG as 鎶ュ憡鐢熸垚鍣?
+    U->>FE: 杈撳叆瀵规瘮鎶ュ憡闇€姹?    FE->>BE: POST /api/storage-agent/parse
+    BE->>AG: 瑙ｆ瀽鎶ュ憡鎰忓浘
+    AG-->>BE: 杩斿洖鎶ュ憡鑽夌
+    BE-->>FE: 杩斿洖鏁版嵁闆嗚崏绋?    U->>FE: 纭鎴栦慨鏀规暟鎹泦
+    FE->>BE: 鍒涘缓鎶ュ憡
+    BE->>DB: 淇濆瓨鎶ュ憡鍜屾暟鎹泦
+    FE->>BE: 鐢熸垚鎶ュ憡
+    BE->>RG: 鐢熸垚棰勮鍜?Excel
+    RG->>DB: 鏌ヨ鏍囧噯鍖栫粨鏋?    RG->>DB: 淇濆瓨鎶ュ憡杈撳嚭
+    BE-->>FE: 杩斿洖棰勮鍜屼笅杞藉湴鍧€
 ```
 
-### 4.3 查询测试指标
+### 4.3 鏌ヨ娴嬭瘯鎸囨爣
 
 ```mermaid
 sequenceDiagram
-    participant U as 用户
-    participant FE as 前端
+    participant U as 鐢ㄦ埛
+    participant FE as 鍓嶇
     participant BE as Spring Boot
-    participant AG as Agent 服务
+    participant AG as Agent 鏈嶅姟
     participant DB as MySQL
 
-    U->>FE: 询问指标问题
+    U->>FE: 璇㈤棶鎸囨爣闂
     FE->>BE: POST /api/storage-agent/parse
-    BE->>AG: 识别查询意图并抽取条件
-    AG-->>BE: 返回查询条件
-    BE->>DB: 查询标准化结果表
-    DB-->>BE: 返回匹配结果
-    BE-->>FE: 返回结构化答案和可选后续动作
-```
+    BE->>AG: 璇嗗埆鏌ヨ鎰忓浘骞舵娊鍙栨潯浠?    AG-->>BE: 杩斿洖鏌ヨ鏉′欢
+    BE->>DB: 鏌ヨ鏍囧噯鍖栫粨鏋滆〃
+    DB-->>BE: 杩斿洖鍖归厤缁撴灉
+    BE-->>FE: 杩斿洖缁撴瀯鍖栫瓟妗堝拰鍙€夊悗缁姩浣?```
 
-## 5. 数据模型
+## 5. 鏁版嵁妯″瀷
 
 ### 5.1 `storage_test_node`
 
-表示测试执行节点，也就是实验室里的小电脑。
-
-关键字段：
-
+琛ㄧず娴嬭瘯鎵ц鑺傜偣锛屼篃灏辨槸瀹為獙瀹ら噷鐨勫皬鐢佃剳銆?
+鍏抽敭瀛楁锛?
 - `id`
 - `node_code`
 - `node_name`
 - `ip_address`
-- `node_status`：`IDLE`、`BUSY`、`OFFLINE`
-- `phone_status`：`CONNECTED`、`NOT_CONNECTED`、`ERROR`
-- `adb_state`：`DEVICE`、`UNAUTHORIZED`、`OFFLINE`、`NOT_FOUND`
+- `node_status`锛歚IDLE`銆乣BUSY`銆乣OFFLINE`
+- `phone_status`锛歚CONNECTED`銆乣NOT_CONNECTED`銆乣ERROR`
+- `adb_state`锛歚DEVICE`銆乣UNAUTHORIZED`銆乣OFFLINE`銆乣NOT_FOUND`
 - `device_serial`
 - `current_sample_id`
 - `capabilities`
@@ -199,10 +161,8 @@ sequenceDiagram
 
 ### 5.2 `storage_sample`
 
-表示 DUT、样品或竞品样品。
-
-关键字段：
-
+琛ㄧず DUT銆佹牱鍝佹垨绔炲搧鏍峰搧銆?
+鍏抽敭瀛楁锛?
 - `id`
 - `project_name`
 - `soc`
@@ -211,19 +171,17 @@ sequenceDiagram
 - `fw_version`
 - `sample_code`
 - `batch_no`
-- `sample_type`：`SELF`、`BASELINE`、`COMPETITOR`
+- `sample_type`锛歚SELF`銆乣BASELINE`銆乣COMPETITOR`
 - `remark`
 
 ### 5.3 `storage_test_case`
 
-表示 CDM、AS SSD、FIO 的标准用例或指标。
-
-关键字段：
-
+琛ㄧず CDM銆丄S SSD銆丗IO 鐨勬爣鍑嗙敤渚嬫垨鎸囨爣銆?
+鍏抽敭瀛楁锛?
 - `id`
 - `case_name`
-- `suite`：`CDM`、`AS_SSD`、`FIO`
-- `scene`：`clean`、`dirty`
+- `suite`锛歚CDM`銆乣AS_SSD`銆乣FIO`
+- `scene`锛歚clean`銆乣dirty`
 - `metric_name`
 - `unit`
 - `priority`
@@ -232,10 +190,8 @@ sequenceDiagram
 
 ### 5.4 `storage_test_task`
 
-表示测试执行任务。该表只负责执行流程，不是报告生成的必要前提。
-
-关键字段：
-
+琛ㄧず娴嬭瘯鎵ц浠诲姟銆傝琛ㄥ彧璐熻矗鎵ц娴佺▼锛屼笉鏄姤鍛婄敓鎴愮殑蹇呰鍓嶆彁銆?
+鍏抽敭瀛楁锛?
 - `id`
 - `task_name`
 - `raw_user_input`
@@ -250,23 +206,20 @@ sequenceDiagram
 - `started_time`
 - `finished_time`
 
-任务状态：
+浠诲姟鐘舵€侊細
 
-- `DRAFT`：待确认
-- `CONFIRMED`：已确认
-- `QUEUED`：待执行
-- `RUNNING`：执行中
-- `COMPLETED`：已完成
-- `FAILED`：失败
-
+- `DRAFT`锛氬緟纭
+- `CONFIRMED`锛氬凡纭
+- `QUEUED`锛氬緟鎵ц
+- `RUNNING`锛氭墽琛屼腑
+- `COMPLETED`锛氬凡瀹屾垚
+- `FAILED`锛氬け璐?
 ### 5.5 `storage_test_result`
 
-标准化性能测试结果表。报告模块只读取该表，不关心数据来源。
-
-关键字段：
-
+鏍囧噯鍖栨€ц兘娴嬭瘯缁撴灉琛ㄣ€傛姤鍛婃ā鍧楀彧璇诲彇璇ヨ〃锛屼笉鍏冲績鏁版嵁鏉ユ簮銆?
+鍏抽敭瀛楁锛?
 - `id`
-- `source_type`：`MOCK_RUNNER`、`REAL_NODE`、`IMPORT`、`HISTORY`
+- `source_type`锛歚MOCK_RUNNER`銆乣REAL_NODE`銆乣IMPORT`銆乣HISTORY`
 - `task_id`
 - `sample_id`
 - `node_id`
@@ -278,21 +231,19 @@ sequenceDiagram
 - `round3_value`
 - `average_value`
 - `unit`
-- `result_status`：`PASS`、`WARNING`、`FAIL`、`N_A`
+- `result_status`锛歚PASS`銆乣WARNING`銆乣FAIL`銆乣N_A`
 - `log_summary`
 - `error_reason`
 - `executed_time`
 
 ### 5.6 `storage_test_report`
 
-表示一份报告草稿或已生成报告。
-
-关键字段：
-
+琛ㄧず涓€浠芥姤鍛婅崏绋挎垨宸茬敓鎴愭姤鍛娿€?
+鍏抽敭瀛楁锛?
 - `id`
 - `report_name`
-- `report_type`：`SINGLE`、`COMPARISON`
-- `report_status`：`DRAFT`、`GENERATING`、`COMPLETED`、`FAILED`
+- `report_type`锛歚SINGLE`銆乣COMPARISON`
+- `report_status`锛歚DRAFT`銆乣GENERATING`銆乣COMPLETED`銆乣FAILED`
 - `preview_json`
 - `excel_file_path`
 - `summary`
@@ -301,13 +252,11 @@ sequenceDiagram
 
 ### 5.7 `storage_report_dataset`
 
-表示一份报告中选择了哪些数据对象。
-
-关键字段：
-
+琛ㄧず涓€浠芥姤鍛婁腑閫夋嫨浜嗗摢浜涙暟鎹璞°€?
+鍏抽敭瀛楁锛?
 - `id`
 - `report_id`
-- `dataset_role`：`TARGET`、`BASELINE`、`COMPETITOR`
+- `dataset_role`锛歚TARGET`銆乣BASELINE`銆乣COMPETITOR`
 - `label`
 - `project_name`
 - `fw_version`
@@ -319,10 +268,8 @@ sequenceDiagram
 
 ### 5.8 `storage_agent_request`
 
-记录 Agent 解析过程，便于调试、回放和评测。
-
-关键字段：
-
+璁板綍 Agent 瑙ｆ瀽杩囩▼锛屼究浜庤皟璇曘€佸洖鏀惧拰璇勬祴銆?
+鍏抽敭瀛楁锛?
 - `id`
 - `raw_input`
 - `intent`
@@ -332,53 +279,37 @@ sequenceDiagram
 - `need_confirm`
 - `created_time`
 
-## 6. Agent 设计
+## 6. Agent 璁捐
 
-### 6.1 支持的意图
+### 6.1 鏀寔鐨勬剰鍥?
+- `CREATE_TEST_TASK`锛氬垱寤烘祴璇曚换鍔?- `CREATE_REPORT`锛氬垱寤烘姤鍛?- `QUERY_RESULT`锛氭煡璇㈢粨鏋?- `ANALYZE_METRIC`锛氬垎鏋愭寚鏍囪〃鐜?- `ANALYZE_FAILURE`锛氬垎鏋愬け璐ワ紝鍚庣画鏀寔
+- `SCHEDULE_BATCH_TEST`锛氭壒閲忔帓鏈燂紝鍚庣画鏀寔
 
-- `CREATE_TEST_TASK`：创建测试任务
-- `CREATE_REPORT`：创建报告
-- `QUERY_RESULT`：查询结果
-- `ANALYZE_METRIC`：分析指标表现
-- `ANALYZE_FAILURE`：分析失败，后续支持
-- `SCHEDULE_BATCH_TEST`：批量排期，后续支持
-
-### 6.2 第一版实现方式
-
-第一版使用：
+### 6.2 绗竴鐗堝疄鐜版柟寮?
+绗竴鐗堜娇鐢細
 
 - FastAPI
-- Pydantic 模型
-- 规则解析
-- 后续可选接入 LLM
+- Pydantic 妯″瀷
+- 瑙勫垯瑙ｆ瀽
+- 鍚庣画鍙€夋帴鍏?LLM
 
-MVP 阶段不强依赖 LangChain 或 LangGraph。
-
-原因：
-
-- 实现更快
-- 演示更稳定
-- 更容易调试
-- 不被框架复杂度拖慢业务闭环
-
-使用 Pydantic 约束结构化输出，避免 Agent 返回不可控格式。
-
-后续演进：
-
-- 使用 LangGraph 管理多步、可中断、可恢复的工作流。
-- 使用 LangChain 或轻量自研检索实现 RAG。
-- 如果结构化 LLM Agent 能力成为重点，可引入 PydanticAI。
-
-### 6.3 输出协议示例
+MVP 闃舵涓嶅己渚濊禆 LangChain 鎴?LangGraph銆?
+鍘熷洜锛?
+- 瀹炵幇鏇村揩
+- 婕旂ず鏇寸ǔ瀹?- 鏇村鏄撹皟璇?- 涓嶈妗嗘灦澶嶆潅搴︽嫋鎱笟鍔￠棴鐜?
+浣跨敤 Pydantic 绾︽潫缁撴瀯鍖栬緭鍑猴紝閬垮厤 Agent 杩斿洖涓嶅彲鎺ф牸寮忋€?
+鍚庣画婕旇繘锛?
+- 浣跨敤 LangGraph 绠＄悊澶氭銆佸彲涓柇銆佸彲鎭㈠鐨勫伐浣滄祦銆?- 浣跨敤 LangChain 鎴栬交閲忚嚜鐮旀绱㈠疄鐜?RAG銆?- 濡傛灉缁撴瀯鍖?LLM Agent 鑳藉姏鎴愪负閲嶇偣锛屽彲寮曞叆 PydanticAI銆?
+### 6.3 杈撳嚭鍗忚绀轰緥
 
 ```json
 {
   "intent": "CREATE_REPORT",
-  "projectName": "WM6000",
-  "targetVersion": "V2.0.4",
-  "baselineVersion": "V2.0.3",
-  "competitor": "2730AB",
-  "particle": "N38B",
+  "projectName": "Project-A",
+  "targetVersion": "FW-v2",
+  "baselineVersion": "FW-v1",
+  "competitor": "Competitor-X",
+  "particle": "Flash-X",
   "capacity": "256G",
   "testSuites": ["CDM", "AS_SSD", "FIO"],
   "scenes": ["clean", "dirty"],
@@ -387,14 +318,10 @@ MVP 阶段不强依赖 LangChain 或 LangGraph。
 }
 ```
 
-### 6.4 查询类输出协议示例
-
-用户输入：
-
-> CDM 顺序读最高速率是哪个样品，哪个版本下的？
-
-Agent 输出：
-
+### 6.4 鏌ヨ绫昏緭鍑哄崗璁ず渚?
+鐢ㄦ埛杈撳叆锛?
+> CDM 椤哄簭璇绘渶楂橀€熺巼鏄摢涓牱鍝侊紝鍝釜鐗堟湰涓嬬殑锛?
+Agent 杈撳嚭锛?
 ```json
 {
   "intent": "QUERY_RESULT",
@@ -408,14 +335,12 @@ Agent 输出：
 }
 ```
 
-平台回答应基于查询结果生成，不允许编造不存在的数据。
+骞冲彴鍥炵瓟搴斿熀浜庢煡璇㈢粨鏋滅敓鎴愶紝涓嶅厑璁哥紪閫犱笉瀛樺湪鐨勬暟鎹€?
+## 7. 鎶ュ憡璁捐
 
-## 7. 报告设计
+### 7.1 鎸囨爣鑼冨洿
 
-### 7.1 指标范围
-
-CDM：
-
+CDM锛?
 - `SEQ R 1M Q8T1`
 - `SEQ W 1M Q8T1`
 - `RND R 4K Q32T16`
@@ -423,8 +348,7 @@ CDM：
 - `RND R 4K Q1T1`
 - `RND W 4K Q1T1`
 
-AS SSD：
-
+AS SSD锛?
 - `SEQ R`
 - `SEQ W`
 - `RAN 4K R`
@@ -432,8 +356,7 @@ AS SSD：
 - `RAN 4K T64 R`
 - `RAN 4K T64 W`
 
-FIO：
-
+FIO锛?
 - `seq_read`
 - `seq_write`
 - `rand_read_4k`
@@ -441,107 +364,71 @@ FIO：
 - `rand_read_4k_qd32`
 - `rand_write_4k_qd32`
 
-### 7.2 计算规则
+### 7.2 璁＄畻瑙勫垯
 
-平均值：
-
-```text
-average = 非空轮次数据的平均值
-```
-
-差异百分比：
+骞冲潎鍊硷細
 
 ```text
-delta = (目标版本平均值 - 基准版本平均值) / 基准版本平均值 * 100%
+average = 闈炵┖杞鏁版嵁鐨勫钩鍧囧€?```
+
+宸紓鐧惧垎姣旓細
+
+```text
+delta = (鐩爣鐗堟湰骞冲潎鍊?- 鍩哄噯鐗堟湰骞冲潎鍊? / 鍩哄噯鐗堟湰骞冲潎鍊?* 100%
 ```
 
-如果基准值缺失或为 0，显示 `N/A`。
+濡傛灉鍩哄噯鍊肩己澶辨垨涓?0锛屾樉绀?`N/A`銆?
+闃堝€硷細
 
-阈值：
+- 鎬ц兘涓嬮檷澶т簬绛変簬 20%锛歚FAIL`
+- 鎬ц兘涓嬮檷澶т簬绛変簬 10%锛歚WARNING`
+- 鍏朵粬鎯呭喌锛歚PASS`
 
-- 性能下降大于等于 20%：`FAIL`
-- 性能下降大于等于 10%：`WARNING`
-- 其他情况：`PASS`
+### 7.3 Excel 瀵煎嚭
 
-### 7.3 Excel 导出
+浣跨敤 Spring Boot 涓殑 Apache POI 瀹炵幇銆?
+绛栫暐锛?
+- 浣跨敤绠€鍖栨ā鏉裤€?- 濉厖鍥哄畾鍖哄煙銆?- 淇濈暀浜哄伐澶囨敞鍖哄煙銆?- 瀵?warning/fail 搴旂敤鏉′欢鏍峰紡銆?- 灏嗙敓鎴愬悗鐨勬枃浠惰矾寰勪繚瀛樺埌 `storage_test_report`銆?
+## 8. 寮傛浠诲姟涓庣姸鎬佺鐞?
+闇€瑕佸紓姝ュ寲鐨勪换鍔★細
 
-使用 Spring Boot 中的 Apache POI 实现。
+- Mock Runner 鎵ц
+- 鎶ュ憡鐢熸垚
+- Excel 瀵煎叆瑙ｆ瀽锛屽悗缁敮鎸?- 鏃ュ織鍒嗘瀽锛屽悗缁敮鎸?- AI 鎬荤粨鐢熸垚锛屽悗缁敮鎸?- 鑺傜偣蹇冭烦鍜?ADB 鎵弿锛屽悗缁敮鎸?
+MVP锛?
+- 浣跨敤 Spring `@Async` 鎴栧畾鏃朵换鍔°€?- 鍓嶇杞浠诲姟鎴栨姤鍛婄姸鎬併€?
+鍚庣画锛?
+- 寮曞叆 Redis Queue銆丷abbitMQ銆並afka 鎴栧伐浣滄祦寮曟搸銆?- 浣跨敤 WebSocket 鎴?SSE 鎺ㄩ€佸疄鏃剁姸鎬併€?- 浣跨敤 LangGraph 绠＄悊鍙腑鏂?Agent 宸ヤ綔娴併€?
+## 9. 閿欒澶勭悊
 
-策略：
+蹇呴』瑕嗙洊锛?
+- 鑷劧璇█杈撳叆缂哄皯瀛楁
+- 鑺傜偣绂荤嚎
+- 鑺傜偣杩愯涓?- 鎵嬫満鏈繛鎺?- ADB 鏈巿鏉?- ADB offline
+- 鏈彂鐜拌澶?- 鏍峰搧涓嶅尮閰?- 鑺傜偣涓嶆敮鎸佺洰鏍囨祴璇曞浠?- 鏈尮閰嶅埌鐢ㄤ緥
+- 鎶ュ憡鏁版嵁缂哄け
+- 鍩哄噯骞冲潎鍊间负 0
+- Mock 鎵ц澶辫触
+- Excel 妯℃澘缂哄け
+- Excel 鐢熸垚澶辫触
 
-- 使用简化模板。
-- 填充固定区域。
-- 保留人工备注区域。
-- 对 warning/fail 应用条件样式。
-- 将生成后的文件路径保存到 `storage_test_report`。
+鎶ュ憡鏁版嵁涓嶅畬鏁存椂锛岀郴缁熶紭鍏堢敓鎴愰儴鍒嗘姤鍛婂苟缁欏嚭娓呮櫚鎻愮ず锛岃€屼笉鏄洿鎺ュけ璐ャ€?
+## 10. RAG 涓庝紒涓氶泦鎴?
+鍦ㄤ紒涓氱幆澧冧腑锛岀郴缁熷簲浼樺厛澧炲己鍘熸湁娴嬭瘯骞冲彴锛岃€屼笉鏄浛浠ｅ師绯荤粺銆?
+鎺ㄨ崘妯″紡锛?
+- RAG 璇诲彇鏂囨。鍜岃鍒欍€?- Tools 閫氳繃鍙楁帶 API 鏌ヨ鏁版嵁鍜屾墽琛屽姩浣溿€?- 楂橀闄╁姩浣滃繀椤讳汉宸ョ‘璁ゃ€?
+閫傚悎杩涘叆 RAG 鐨勫唴瀹癸細
 
-## 8. 异步任务与状态管理
+- 鏁版嵁搴撹〃缁撴瀯璇存槑
+- 娴嬭瘯鐢ㄤ緥鍛藉悕瑙勫垯
+- 鎶ュ憡妯℃澘璇存槑
+- 娴嬭瘯娴佺▼鏂囨。
+- 鍘嗗彶鎶ュ憡缁撹
+- 甯歌澶辫触鍘熷洜
+- 鑺傜偣鎿嶄綔鎵嬪唽
+- ADB 鏁呴殰鎺掓煡鏂囨。
 
-需要异步化的任务：
-
-- Mock Runner 执行
-- 报告生成
-- Excel 导入解析，后续支持
-- 日志分析，后续支持
-- AI 总结生成，后续支持
-- 节点心跳和 ADB 扫描，后续支持
-
-MVP：
-
-- 使用 Spring `@Async` 或定时任务。
-- 前端轮询任务或报告状态。
-
-后续：
-
-- 引入 Redis Queue、RabbitMQ、Kafka 或工作流引擎。
-- 使用 WebSocket 或 SSE 推送实时状态。
-- 使用 LangGraph 管理可中断 Agent 工作流。
-
-## 9. 错误处理
-
-必须覆盖：
-
-- 自然语言输入缺少字段
-- 节点离线
-- 节点运行中
-- 手机未连接
-- ADB 未授权
-- ADB offline
-- 未发现设备
-- 样品不匹配
-- 节点不支持目标测试套件
-- 未匹配到用例
-- 报告数据缺失
-- 基准平均值为 0
-- Mock 执行失败
-- Excel 模板缺失
-- Excel 生成失败
-
-报告数据不完整时，系统优先生成部分报告并给出清晰提示，而不是直接失败。
-
-## 10. RAG 与企业集成
-
-在企业环境中，系统应优先增强原有测试平台，而不是替代原系统。
-
-推荐模式：
-
-- RAG 读取文档和规则。
-- Tools 通过受控 API 查询数据和执行动作。
-- 高风险动作必须人工确认。
-
-适合进入 RAG 的内容：
-
-- 数据库表结构说明
-- 测试用例命名规则
-- 报告模板说明
-- 测试流程文档
-- 历史报告结论
-- 常见失败原因
-- 节点操作手册
-- ADB 故障排查文档
-
-可封装的工具：
-
+鍙皝瑁呯殑宸ュ叿锛?
 - `search_test_cases`
 - `find_available_nodes`
 - `query_performance_results`
@@ -551,56 +438,29 @@ MVP：
 - `generate_report`
 - `summarize_logs`
 
-## 11. Eval 评测设计
+## 11. Eval 璇勬祴璁捐
 
-评测类别：
+璇勬祴绫诲埆锛?
+1. 鎰忓浘璇嗗埆
+2. 瀛楁鎶藉彇
+3. 缂哄け瀛楁璇嗗埆
+4. 宸ュ叿閫夋嫨鍜岃皟鐢ㄩ『搴?5. 鎶ュ憡璁＄畻
+6. 鎬荤粨鏄惁鍩轰簬鐪熷疄鏁版嵁
 
-1. 意图识别
-2. 字段抽取
-3. 缺失字段识别
-4. 工具选择和调用顺序
-5. 报告计算
-6. 总结是否基于真实数据
+璇勬祴鎸囨爣锛?
+- 鎰忓浘鍑嗙‘鐜?- 瀛楁鍑嗙‘鐜?- 缂哄け瀛楁鍙洖鐜?- 宸ュ叿璋冪敤鍑嗙‘鐜?- 璁＄畻鍑嗙‘鐜?- 骞昏鐜?- 楂橀闄╁姩浣滄槸鍚﹁姹備汉宸ョ‘璁?
+绀轰緥璇勬祴鐢ㄤ緥锛?
+- 瀛楁瀹屾暣鐨勫垱寤烘祴璇曚换鍔¤姹?- 缂哄皯鑺傜偣鐨勫垱寤烘祴璇曚换鍔¤姹?- 鍖呭惈鍩哄噯鐗堟湰鍜岀珵鍝佺殑鎶ュ憡璇锋眰
+- 鏌ヨ CDM 椤哄簭璇绘渶楂橀€熺巼鐨勯棶棰?- 鏌ヨ鏌愮増鏈浉姣斾笂鐗堟湰涓嬮檷瓒呰繃 10% 鐨勬寚鏍?- FIO dirty 鏁版嵁缂哄け鐨勬姤鍛婅姹?- 4K 闅忔満鍐欐€ц兘涓嬮檷鍒嗘瀽璇锋眰
+- 澶辫触浠诲姟閲嶈瘯璇锋眰
 
-评测指标：
+## 12. 楠岃瘉璁″垝
 
-- 意图准确率
-- 字段准确率
-- 缺失字段召回率
-- 工具调用准确率
-- 计算准确率
-- 幻觉率
-- 高风险动作是否要求人工确认
+MVP 楠岃瘉椤癸細
 
-示例评测用例：
+- Agent 绀轰緥杈撳叆杩斿洖棰勬湡 JSON銆?- Agent 鑳借瘑鍒煡璇㈢被闂骞剁敓鎴愬彈鎺ф煡璇㈡潯浠躲€?- 鑺傜偣鍙敤鎬ф鏌ュ寘鍚墜鏈鸿繛鎺ュ拰 ADB 鐘舵€併€?- Mock Runner 鍙互鐢熸垚 CDM銆丄S SSD銆丗IO 缁撴灉銆?- 鎶ュ憡鍙互鍦ㄤ笉浼犱换鍔?ID 鐨勬儏鍐典笅鐢熸垚銆?- 鎶ュ憡鏀寔鐩爣鐗堟湰銆佸熀鍑嗙増鏈拰绔炲搧鏁版嵁闆嗐€?- 鏌ヨ绫婚棶棰樿繑鍥炵殑鏁版嵁蹇呴』鏉ヨ嚜鏍囧噯鍖栫粨鏋滆〃銆?- 宸紓璁＄畻姝ｇ‘銆?- 鍩哄噯鍊肩己澶辨垨涓?0 鏃舵樉绀?`N/A`銆?- Excel 鏂囦欢鍙互鐢熸垚銆?- warning/fail 鏍峰紡鍙互搴旂敤銆?
+## 13. 闈㈣瘯椤圭洰璁叉硶
 
-- 字段完整的创建测试任务请求
-- 缺少节点的创建测试任务请求
-- 包含基准版本和竞品的报告请求
-- 查询 CDM 顺序读最高速率的问题
-- 查询某版本相比上版本下降超过 10% 的指标
-- FIO dirty 数据缺失的报告请求
-- 4K 随机写性能下降分析请求
-- 失败任务重试请求
+绠€鐭増鏈細
 
-## 12. 验证计划
-
-MVP 验证项：
-
-- Agent 示例输入返回预期 JSON。
-- Agent 能识别查询类问题并生成受控查询条件。
-- 节点可用性检查包含手机连接和 ADB 状态。
-- Mock Runner 可以生成 CDM、AS SSD、FIO 结果。
-- 报告可以在不传任务 ID 的情况下生成。
-- 报告支持目标版本、基准版本和竞品数据集。
-- 查询类问题返回的数据必须来自标准化结果表。
-- 差异计算正确。
-- 基准值缺失或为 0 时显示 `N/A`。
-- Excel 文件可以生成。
-- warning/fail 样式可以应用。
-
-## 13. 面试项目讲法
-
-简短版本：
-
-> 我基于传统测试管理系统，升级出一个 AI 辅助的存储性能 TestOps 平台。系统支持自然语言创建测试任务或报告草稿，能够检查节点、手机连接和 ADB 状态，匹配用例，模拟分布式节点执行，将结果标准化入库，并生成 Excel 对比报告。AI 在这里不是替代测试平台，而是作为受控的工作流助手，所有执行和报告都基于平台真实数据。
+> 鎴戝熀浜庝紶缁熸祴璇曠鐞嗙郴缁燂紝鍗囩骇鍑轰竴涓?AI 杈呭姪鐨勫瓨鍌ㄦ€ц兘 TestOps 骞冲彴銆傜郴缁熸敮鎸佽嚜鐒惰瑷€鍒涘缓娴嬭瘯浠诲姟鎴栨姤鍛婅崏绋匡紝鑳藉妫€鏌ヨ妭鐐广€佹墜鏈鸿繛鎺ュ拰 ADB 鐘舵€侊紝鍖归厤鐢ㄤ緥锛屾ā鎷熷垎甯冨紡鑺傜偣鎵ц锛屽皢缁撴灉鏍囧噯鍖栧叆搴擄紝骞剁敓鎴?Excel 瀵规瘮鎶ュ憡銆侫I 鍦ㄨ繖閲屼笉鏄浛浠ｆ祴璇曞钩鍙帮紝鑰屾槸浣滀负鍙楁帶鐨勫伐浣滄祦鍔╂墜锛屾墍鏈夋墽琛屽拰鎶ュ憡閮藉熀浜庡钩鍙扮湡瀹炴暟鎹€?

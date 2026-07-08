@@ -38,9 +38,9 @@ public class StorageMetricQueryServiceTest {
 
         StorageSampleEntity sample = new StorageSampleEntity();
         sample.setId(2L);
-        sample.setSampleCode("WM6000-N38B-256G-204");
-        sample.setProjectName("WM6000");
-        sample.setFwVersion("V2.0.4");
+        sample.setSampleCode("Project-A-Flash-X-256G-FW-v2");
+        sample.setProjectName("Project-A");
+        sample.setFwVersion("FW-v2");
         when(sampleService.selectById(2L)).thenReturn(sample);
 
         StorageMetricQueryServiceImpl service = new StorageMetricQueryServiceImpl();
@@ -56,11 +56,13 @@ public class StorageMetricQueryServiceTest {
         List<MetricQueryResult> results = service.query(request);
 
         assertEquals(1, results.size());
-        String answer = results.get(0).getAnswer();
-        assertTrue(answer.contains("最高"));
-        assertTrue(answer.contains("样品 WM6000-N38B-256G-204"));
-        assertTrue(answer.contains("版本 V2.0.4"));
-        assertTrue(answer.contains("场景 clean"));
-        assertTrue(answer.contains("平均值为 340.457 MB/s"));
+        MetricQueryResult result = results.get(0);
+        assertEquals("Project-A-Flash-X-256G-FW-v2", result.getSampleCode());
+        assertEquals("Project-A", result.getProjectName());
+        assertEquals("FW-v2", result.getFwVersion());
+        assertEquals("clean", result.getScene());
+        assertEquals(new BigDecimal("340.457"), result.getAverageValue());
+        assertTrue(result.getAnswer().contains("Project-A-Flash-X-256G-FW-v2"));
+        assertTrue(result.getAnswer().contains("FW-v2"));
     }
 }

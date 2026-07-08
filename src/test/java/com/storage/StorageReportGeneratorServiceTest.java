@@ -58,8 +58,8 @@ public class StorageReportGeneratorServiceTest {
         StorageReportDatasetEntity baselineDataset = dataset(2L, 10L, "BASELINE", 1L);
         when(datasetService.selectList(any(EntityWrapper.class))).thenReturn(Arrays.asList(targetDataset, baselineDataset));
 
-        StorageSampleEntity targetSample = sample(2L, "WM6000", "V2.0.4");
-        StorageSampleEntity baselineSample = sample(1L, "WM6000", "V2.0.3");
+        StorageSampleEntity targetSample = sample(2L, "Project-A", "FW-v2");
+        StorageSampleEntity baselineSample = sample(1L, "Project-A", "FW-v1");
         when(sampleService.selectById(2L)).thenReturn(targetSample);
         when(sampleService.selectById(1L)).thenReturn(baselineSample);
 

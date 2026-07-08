@@ -49,8 +49,8 @@ public class StorageMockRunnerServiceTest {
 
         StorageSampleEntity sample = new StorageSampleEntity();
         sample.setId(2L);
-        sample.setProjectName("WM6000");
-        sample.setFwVersion("V2.0.4");
+        sample.setProjectName("Project-A");
+        sample.setFwVersion("FW-v2");
         when(sampleService.selectById(2L)).thenReturn(sample);
 
         doAnswer(invocation -> {
@@ -64,11 +64,11 @@ public class StorageMockRunnerServiceTest {
 
         StorageTestTaskEntity storedTask = new StorageTestTaskEntity();
         storedTask.setId(100L);
-        storedTask.setTaskName("WM6000 task");
+        storedTask.setTaskName("Project-A task");
         storedTask.setSampleId(2L);
         storedTask.setNodeId(3L);
-        storedTask.setProjectName("WM6000");
-        storedTask.setTargetVersion("V2.0.4");
+        storedTask.setProjectName("Project-A");
+        storedTask.setTargetVersion("FW-v2");
         storedTask.setTestSuites("CDM,FIO");
         storedTask.setScenes("clean,dirty");
         storedTask.setTaskStatus("DRAFT");
@@ -108,7 +108,7 @@ public class StorageMockRunnerServiceTest {
         ReflectionTestUtils.setField(service, "storageSampleService", sampleService);
 
         CreateStorageTaskRequest request = new CreateStorageTaskRequest();
-        request.setTaskName("WM6000 task");
+        request.setTaskName("Project-A task");
         request.setSampleId(2L);
         request.setNodeId(3L);
         request.setTestSuites(Arrays.asList("CDM", "FIO"));
@@ -119,8 +119,8 @@ public class StorageMockRunnerServiceTest {
         assertEquals("DRAFT", created.getTaskStatus());
         assertEquals("CDM,FIO", created.getTestSuites());
         assertEquals("clean,dirty", created.getScenes());
-        assertEquals("WM6000", created.getProjectName());
-        assertEquals("V2.0.4", created.getTargetVersion());
+        assertEquals("Project-A", created.getProjectName());
+        assertEquals("FW-v2", created.getTargetVersion());
 
         StorageTestTaskEntity completed = service.runTask(100L);
         assertEquals("COMPLETED", completed.getTaskStatus());
