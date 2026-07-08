@@ -1,0 +1,20 @@
+target/
+upload/
+.idea/
+*.iml
+node_modules/
+.cache/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local demo/export artifacts
+test report generate/
+
+# Runtime and editor noise
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

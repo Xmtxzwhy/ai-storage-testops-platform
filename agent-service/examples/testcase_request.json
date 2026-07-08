@@ -1,0 +1,10 @@
+{
+  "project_name": "Test Management System",
+  "module_name": "Test Case Management",
+  "requirement": "A test manager can create test cases from project requirements, including case name, functional requirement, known issue, solution need, and detail description. A test engineer can only view test cases under assigned projects and cannot update or delete them without permission. The system should support later test analysis and report generation.",
+  "role": "test_manager",
+  "platform": "web",
+  "risk_keywords": ["permission", "data consistency", "report generation"],
+  "max_cases": 8
+}
+

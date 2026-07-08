@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.CeshituanduiDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.entity.CeshituanduiEntity" id="ceshituanduiMap">
+        <result property="tuanduimingcheng" column="tuanduimingcheng"/>
+        <result property="lianxifangshi" column="lianxifangshi"/>
+        <result property="chenglishijian" column="chenglishijian"/>
+        <result property="tuanduichengyuan" column="tuanduichengyuan"/>
+        <result property="tuanduijieshao" column="tuanduijieshao"/>
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.entity.vo.CeshituanduiVO" >
+		SELECT * FROM ceshituandui  ceshituandui         
+        <where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.entity.vo.CeshituanduiVO" >
+		SELECT  ceshituandui.* FROM ceshituandui  ceshituandui 	
+ 		<where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+
+    <select id="selectListView"
+		resultType="com.entity.view.CeshituanduiView" >
+
+		SELECT  ceshituandui.* FROM ceshituandui  ceshituandui 	        
+        <where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+	
+	<select id="selectView"
+		resultType="com.entity.view.CeshituanduiView" >
+		SELECT * FROM ceshituandui  ceshituandui <where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+	
+
+
+</mapper>
