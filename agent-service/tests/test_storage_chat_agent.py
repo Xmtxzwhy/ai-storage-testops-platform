@@ -90,3 +90,21 @@ def test_openai_key_marks_response_as_openai_ready(monkeypatch):
     assert response.data["llmMode"] == "openai"
     assert response.toolCalls[0].tool == "llm_router"
     assert fake_client.responses.calls[0]["model"]
+
+
+def test_missing_openai_dependency_falls_back(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("AGENT_LLM_ENABLED", "true")
+
+    class MissingDependencyAgent(StorageChatAgent):
+        def _create_openai_client(self):
+            raise ModuleNotFoundError("No module named 'openai'")
+
+    response = MissingDependencyAgent().chat(
+        StorageChatRequest(sessionId="demo", message="你能做什么？")
+    )
+
+    assert response.intent == "CAPABILITY"
+    assert response.data["llmMode"] == "fallback"
+    assert response.toolCalls[0].tool == "llm_router"
+    assert response.toolCalls[0].status == "failed"

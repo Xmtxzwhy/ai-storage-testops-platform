@@ -27,9 +27,9 @@ class StorageChatAgent:
 
     def _llm_chat(self, request: StorageChatRequest) -> StorageChatResponse:
         fallback = self._fallback_chat(request.sessionId, request.message.strip())
-        client = self.llm_client or self._create_openai_client()
         prompt = self._build_llm_prompt(request.message, fallback)
         try:
+            client = self.llm_client or self._create_openai_client()
             result = client.responses.create(
                 model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
                 input=prompt,
