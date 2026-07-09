@@ -1,5 +1,6 @@
 package com.controller.storage;
 
+import com.dto.storage.StorageAgentChatRequest;
 import com.dto.storage.StorageAgentParseRequest;
 import com.service.storage.StorageAgentFacadeService;
 import com.utils.R;
@@ -17,5 +18,10 @@ public class StorageAgentController {
     @RequestMapping("/parse")
     public R parse(@RequestBody StorageAgentParseRequest request) {
         return R.ok().put("data", storageAgentFacadeService.parse(request.getText()));
+    }
+
+    @RequestMapping("/chat")
+    public R chat(@RequestBody StorageAgentChatRequest request) {
+        return R.ok().put("data", storageAgentFacadeService.chat(request));
     }
 }

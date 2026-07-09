@@ -1,6 +1,8 @@
 package com.service.impl.storage;
 
 import com.alibaba.fastjson.JSON;
+import com.dto.storage.StorageAgentChatRequest;
+import com.dto.storage.StorageAgentChatResponse;
 import com.dto.storage.StorageAgentParseRequest;
 import com.dto.storage.StorageAgentParseResult;
 import com.entity.storage.StorageAgentRequestEntity;
@@ -15,6 +17,7 @@ import java.math.BigDecimal;
 @Service("storageAgentFacadeService")
 public class StorageAgentFacadeServiceImpl implements StorageAgentFacadeService {
     private static final String AGENT_URL = "http://localhost:8090/api/agents/storage/parse";
+    private static final String AGENT_CHAT_URL = "http://localhost:8090/api/agents/storage/chat";
 
     @Autowired
     private StorageAgentRequestService storageAgentRequestService;
@@ -28,6 +31,11 @@ public class StorageAgentFacadeServiceImpl implements StorageAgentFacadeService 
         StorageAgentParseResult result = restTemplate.postForObject(AGENT_URL, request, StorageAgentParseResult.class);
         saveRequestRecord(text, result);
         return result;
+    }
+
+    @Override
+    public StorageAgentChatResponse chat(StorageAgentChatRequest request) {
+        return restTemplate.postForObject(AGENT_CHAT_URL, request, StorageAgentChatResponse.class);
     }
 
     private void saveRequestRecord(String text, StorageAgentParseResult result) {

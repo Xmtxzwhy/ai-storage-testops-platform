@@ -9,6 +9,52 @@
       <el-tag type="success">面试演示版</el-tag>
     </div>
 
+    <el-card shadow="never" class="panel chat-panel">
+      <div slot="header" class="panel-title">
+        <span>对话式Agent</span>
+        <el-tag size="small" type="warning">LLM-ready / Fallback可演示</el-tag>
+      </div>
+      <div class="chat-examples">
+        <el-button v-for="item in chatExamples" :key="item" size="mini" @click="chatInput = item">{{ item }}</el-button>
+      </div>
+      <div class="chat-window">
+        <div v-for="(message, index) in chatMessages" :key="index" :class="['chat-message', message.role]">
+          <div class="bubble">
+            <div class="message-role">{{ message.role === 'user' ? '你' : 'Agent' }}</div>
+            <div class="message-text">{{ message.content }}</div>
+            <div v-if="message.toolCalls && message.toolCalls.length" class="tool-trace">
+              <div v-for="(tool, toolIndex) in message.toolCalls" :key="toolIndex" class="tool-item">
+                <el-tag size="mini" :type="tool.status === 'success' ? 'success' : 'info'">{{ tool.status }}</el-tag>
+                <span>{{ tool.tool }}</span>
+                <em>{{ tool.summary }}</em>
+              </div>
+            </div>
+            <div v-if="message.actions && message.actions.length" class="action-row">
+              <el-button
+                v-for="action in message.actions"
+                :key="action.actionId"
+                size="mini"
+                type="warning"
+                @click="confirmChatAction(action)"
+              >
+                {{ action.label }}
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <el-input
+          v-model="chatInput"
+          placeholder="和Agent对话，例如：CDM 顺序读最高的是哪个样品哪个版本？"
+          @keyup.enter.native="sendChatMessage()"
+        />
+        <el-button type="primary" icon="el-icon-s-promotion" :loading="loading.chat" @click="sendChatMessage">
+          发送
+        </el-button>
+      </div>
+    </el-card>
+
     <el-row :gutter="16">
       <el-col :lg="10" :md="24">
         <el-card shadow="never" class="panel">
@@ -237,6 +283,21 @@ export default {
       report: {},
       reportDetail: null,
       metricAnswers: [],
+      sessionId: `demo-${Date.now()}`,
+      chatInput: '你能做什么？',
+      chatMessages: [
+        {
+          role: 'assistant',
+          content: '你好，我是存储测试平台Agent。你可以问我测试任务、性能指标、报告生成，也可以让我说明能力范围。'
+        }
+      ],
+      chatExamples: [
+        '你能做什么？',
+        'CDM 顺序读最高的是哪个样品哪个版本？',
+        'Node-3 跑 Project-A FW-v2 的 CDM clean',
+        '帮我订一张去上海的机票',
+        '现在几点？'
+      ],
       sampleOptions: [1, 2, 3],
       taskForm: {
         taskName: 'AI-CDM-clean-FW-v2',
@@ -267,6 +328,7 @@ export default {
         createReport: false,
         generateReport: false,
         downloadReport: false,
+        chat: false,
         metric: false
       }
     }
@@ -283,6 +345,52 @@ export default {
     }
   },
   methods: {
+    async sendChatMessage(confirmActionId) {
+      const messageText = this.chatInput.trim()
+      if (!messageText && !confirmActionId) {
+        this.$message.warning('请输入要发送给Agent的内容')
+        return
+      }
+      if (!confirmActionId) {
+        this.chatMessages.push({ role: 'user', content: messageText })
+      }
+      this.loading.chat = true
+      try {
+        const data = await this.request('post', 'storage-agent/chat', {
+          sessionId: this.sessionId,
+          message: confirmActionId ? `确认执行 ${confirmActionId}` : messageText,
+          confirmActionId: confirmActionId || null
+        })
+        this.chatMessages.push({
+          role: 'assistant',
+          content: data.reply,
+          toolCalls: data.toolCalls || [],
+          actions: data.actions || []
+        })
+        this.chatInput = ''
+      } catch (error) {
+        this.showError(error, 'Agent对话失败，请确认agent-service已启动')
+      } finally {
+        this.loading.chat = false
+      }
+    },
+    confirmChatAction(action) {
+      this.chatMessages.push({
+        role: 'user',
+        content: `确认：${action.label}`
+      })
+      this.chatMessages.push({
+        role: 'assistant',
+        content: '当前版本已收到确认，但高风险动作仍保留为人工按钮执行。请在下方工作流区域继续创建任务或生成报告。',
+        toolCalls: [
+          {
+            tool: action.type,
+            status: 'confirmed',
+            summary: action.actionId
+          }
+        ]
+      })
+    },
     async parseAgentText() {
       if (!this.agentText.trim()) {
         this.$message.warning('请先输入自然语言测试需求')
@@ -564,6 +672,99 @@ export default {
   flex-wrap: wrap;
   gap: 8px;
   margin: 12px 0;
+}
+
+.chat-panel {
+  border-color: #dbeafe;
+}
+
+.chat-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chat-window {
+  height: 300px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid #e6eaf2;
+  background: #f8fbff;
+  border-radius: 6px;
+}
+
+.chat-message {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.chat-message.user {
+  justify-content: flex-end;
+}
+
+.chat-message.assistant {
+  justify-content: flex-start;
+}
+
+.bubble {
+  max-width: 78%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e6eaf2;
+}
+
+.chat-message.user .bubble {
+  background: #ecf5ff;
+  border-color: #b3d8ff;
+}
+
+.message-role {
+  font-size: 12px;
+  color: #409eff;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.message-text {
+  color: #1f2d3d;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.tool-trace {
+  margin-top: 8px;
+  border-top: 1px dashed #d9e2f2;
+  padding-top: 8px;
+}
+
+.tool-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #475467;
+  font-size: 12px;
+}
+
+.tool-item em {
+  color: #98a2b3;
+  font-style: normal;
+}
+
+.action-row {
+  margin-top: 8px;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.chat-input-row .el-input {
+  flex: 1;
 }
 
 .task-form .el-select,
