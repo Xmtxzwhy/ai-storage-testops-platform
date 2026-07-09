@@ -47,9 +47,9 @@
         <el-input
           v-model="chatInput"
           placeholder="和Agent对话，例如：CDM 顺序读最高的是哪个样品哪个版本？"
-          @keyup.enter.native="sendChatMessage()"
+          @keyup.enter.native="sendChatMessage(null)"
         />
-        <el-button type="primary" icon="el-icon-s-promotion" :loading="loading.chat" @click="sendChatMessage">
+        <el-button type="primary" icon="el-icon-s-promotion" :loading="loading.chat" @click="sendChatMessage(null)">
           发送
         </el-button>
       </div>
@@ -346,20 +346,21 @@ export default {
   },
   methods: {
     async sendChatMessage(confirmActionId) {
+      const safeConfirmActionId = typeof confirmActionId === 'string' ? confirmActionId : null
       const messageText = this.chatInput.trim()
-      if (!messageText && !confirmActionId) {
+      if (!messageText && !safeConfirmActionId) {
         this.$message.warning('请输入要发送给Agent的内容')
         return
       }
-      if (!confirmActionId) {
+      if (!safeConfirmActionId) {
         this.chatMessages.push({ role: 'user', content: messageText })
       }
       this.loading.chat = true
       try {
         const data = await this.request('post', 'storage-agent/chat', {
           sessionId: this.sessionId,
-          message: confirmActionId ? `确认执行 ${confirmActionId}` : messageText,
-          confirmActionId: confirmActionId || null
+          message: safeConfirmActionId ? `确认执行 ${safeConfirmActionId}` : messageText,
+          confirmActionId: safeConfirmActionId
         })
         this.chatMessages.push({
           role: 'assistant',
