@@ -11,6 +11,7 @@ import UpdatePassword from '@/views/update-password'
 import pay from '@/views/pay'
 import register from '@/views/register'
 import center from '@/views/center'
+import StorageAgentDemo from '@/views/modules/storage-agent-demo/index'
 	import ceshituandui from '@/views/modules/ceshituandui/list'
 	import ceshifenxi from '@/views/modules/ceshifenxi/list'
 	import xiufugaijin from '@/views/modules/xiufugaijin/list'
@@ -57,6 +58,11 @@ export const routes = [{
 		name: '个人信息',
 		component: center,
 		meta: {icon:'', title:'center'}
+	}, {
+		path: '/storage-agent-demo',
+		name: 'AI测管演示台',
+		component: StorageAgentDemo,
+		meta: {icon:'el-icon-cpu', title:'storage-agent-demo'}
 	}
 	,{
 		path: '/ceshituandui',

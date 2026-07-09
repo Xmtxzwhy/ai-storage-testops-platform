@@ -27,6 +27,12 @@
 							slot="title">{{verticalStyle2.open.home.one.title.text}}</span>
 					</div>
 				</el-menu-item>
+				<el-menu-item class="other" :popper-append-to-body="false" popper-class="other" @click="menuHandler('storage-agent-demo')" :style="verticalStyle2[isCollapse?'close':'open'].menu.one.box.default" index="/storage-agent-demo">
+					<div class="el-tooltip">
+						<i :style="verticalStyle2[isCollapse?'close':'open'].menu.one.icon.default" class="el-icon-cpu"></i>
+						<span :style="verticalStyle2[isCollapse?'close':'open'].menu.one.title.default" slot="title">AI测管演示台</span>
+					</div>
+				</el-menu-item>
 				<el-submenu class="user" popper-class="user" :popper-append-to-body="false"
 					:style="verticalStyle2[isCollapse?'close':'open'].user.one.box.default" index="1">
 					<template slot="title">
