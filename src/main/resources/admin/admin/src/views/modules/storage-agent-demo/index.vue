@@ -169,7 +169,7 @@
             <el-button type="success" icon="el-icon-data-analysis" :disabled="!report.id" :loading="loading.generateReport" @click="generateReport">
               生成报告
             </el-button>
-            <el-button icon="el-icon-download" :disabled="!report.id || !report.excelFilePath" @click="downloadReport">
+            <el-button icon="el-icon-download" :disabled="!report.id || !report.excelFilePath" :loading="loading.downloadReport" @click="downloadReport">
               下载Excel
             </el-button>
           </div>
@@ -266,6 +266,7 @@ export default {
         results: false,
         createReport: false,
         generateReport: false,
+        downloadReport: false,
         metric: false
       }
     }
@@ -390,12 +391,35 @@ export default {
         this.loading.generateReport = false
       }
     },
-    downloadReport() {
+    async downloadReport() {
       if (!this.report.id) {
         this.$message.warning('请先生成报告')
         return
       }
-      window.open(`/springbootarkc6v1u/storage-reports/${this.report.id}/download`, '_blank')
+      this.loading.downloadReport = true
+      try {
+        const response = await this.$http({
+          method: 'get',
+          url: `storage-reports/${this.report.id}/download`,
+          responseType: 'blob'
+        })
+        const fileName = this.resolveDownloadFileName(response.headers['content-disposition'])
+        const objectUrl = window.URL.createObjectURL(new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }))
+        const link = document.createElement('a')
+        link.href = objectUrl
+        link.download = fileName
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(objectUrl)
+        this.$message.success('Excel报告已开始下载')
+      } catch (error) {
+        this.showError(error, '下载报告失败，请确认登录状态')
+      } finally {
+        this.loading.downloadReport = false
+      }
     },
     async queryMetric() {
       if (!this.metricForm.suite || !this.metricForm.metricName) {
@@ -455,6 +479,20 @@ export default {
         metricName: 'SEQ R 1M Q8T1',
         aggregation: 'MAX',
         rankLimit: 1
+      }
+    },
+    resolveDownloadFileName(contentDisposition) {
+      if (!contentDisposition) {
+        return `storage-report-${this.report.id}.xlsx`
+      }
+      const matched = contentDisposition.match(/filename="?([^"]+)"?/)
+      if (!matched) {
+        return `storage-report-${this.report.id}.xlsx`
+      }
+      try {
+        return decodeURIComponent(matched[1])
+      } catch (error) {
+        return matched[1]
       }
     },
     resetDemo() {
