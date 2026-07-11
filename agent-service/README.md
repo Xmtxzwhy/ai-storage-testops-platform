@@ -24,22 +24,30 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8090
 ```
 
-## Run with DeepSeek
+## Run with Zhipu BigModel
 
-DeepSeek provides an OpenAI-compatible API. Create an API key at
-`https://platform.deepseek.com/api_keys`, then start this service with:
+Zhipu BigModel provides an OpenAI-compatible API. Create an API key in the
+BigModel console, then start this service with:
 
 ```powershell
 cd "E:\Mywork\TestManagement\springbootarkc6v1u(run success)\agent-service"
 .\.venv\Scripts\Activate.ps1
-$env:OPENAI_API_KEY="你的 DeepSeek API Key"
-$env:OPENAI_BASE_URL="https://api.deepseek.com"
-$env:OPENAI_MODEL="deepseek-v4-flash"
+$env:OPENAI_API_KEY="你的智谱 BigModel API Key"
+$env:OPENAI_BASE_URL="https://open.bigmodel.cn/api/paas/v4"
+$env:OPENAI_MODEL="glm-5.2"
 uvicorn app.main:app --reload --port 8090
 ```
 
 If the service is already running, stop it with `Ctrl+C`, set the environment
 variables above in the same PowerShell window, then start `uvicorn` again.
+
+DeepSeek can still be used as a backup provider:
+
+```powershell
+$env:OPENAI_API_KEY="你的 DeepSeek API Key"
+$env:OPENAI_BASE_URL="https://api.deepseek.com"
+$env:OPENAI_MODEL="deepseek-v4-flash"
+```
 
 ## Try
 
