@@ -30,11 +30,7 @@ class StorageChatAgent:
         prompt = self._build_llm_prompt(request.message, fallback)
         try:
             client = self.llm_client or self._create_openai_client()
-            result = client.responses.create(
-                model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
-                input=prompt,
-            )
-            reply = getattr(result, "output_text", None) or fallback.reply
+            reply = self._generate_llm_reply(client, prompt) or fallback.reply
             fallback.reply = reply
             fallback.data["llmMode"] = "openai"
             fallback.toolCalls.insert(0, StorageToolCall(
@@ -52,10 +48,32 @@ class StorageChatAgent:
             ))
             return fallback
 
+    def _generate_llm_reply(self, client, prompt: str) -> str:
+        model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+        if os.getenv("OPENAI_BASE_URL"):
+            result = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            choices = getattr(result, "choices", [])
+            if not choices:
+                return ""
+            return getattr(choices[0].message, "content", "") or ""
+
+        result = client.responses.create(
+            model=model,
+            input=prompt,
+        )
+        return getattr(result, "output_text", "") or ""
+
     def _create_openai_client(self):
         from openai import OpenAI
 
-        return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        client_options = {"api_key": os.getenv("OPENAI_API_KEY")}
+        base_url = os.getenv("OPENAI_BASE_URL")
+        if base_url:
+            client_options["base_url"] = base_url
+        return OpenAI(**client_options)
 
     def _build_llm_prompt(self, message: str, fallback: StorageChatResponse) -> str:
         return (

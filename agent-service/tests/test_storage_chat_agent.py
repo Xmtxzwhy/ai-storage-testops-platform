@@ -1,4 +1,6 @@
 import os
+import sys
+import types
 
 from app.schemas.storage_chat import StorageChatRequest
 from app.services.storage_chat_agent import StorageChatAgent
@@ -108,3 +110,64 @@ def test_missing_openai_dependency_falls_back(monkeypatch):
     assert response.data["llmMode"] == "fallback"
     assert response.toolCalls[0].tool == "llm_router"
     assert response.toolCalls[0].status == "failed"
+
+
+def test_openai_client_uses_configured_base_url(monkeypatch):
+    captured = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    fake_module = types.SimpleNamespace(OpenAI=FakeOpenAI)
+    monkeypatch.setitem(sys.modules, "openai", fake_module)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.deepseek.com")
+
+    StorageChatAgent()._create_openai_client()
+
+    assert captured["api_key"] == "test-key"
+    assert captured["base_url"] == "https://api.deepseek.com"
+
+
+def test_custom_base_url_uses_chat_completions(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.deepseek.com")
+    monkeypatch.setenv("OPENAI_MODEL", "deepseek-v4-flash")
+    monkeypatch.setenv("AGENT_LLM_ENABLED", "true")
+
+    class FakeChoiceMessage:
+        content = "deepseek compatible reply"
+
+    class FakeChoice:
+        message = FakeChoiceMessage()
+
+    class FakeCompletion:
+        choices = [FakeChoice()]
+
+    class FakeCompletions:
+        def __init__(self):
+            self.calls = []
+
+        def create(self, **kwargs):
+            self.calls.append(kwargs)
+            return FakeCompletion()
+
+    class FakeChat:
+        def __init__(self):
+            self.completions = FakeCompletions()
+
+    class FakeClient:
+        def __init__(self):
+            self.chat = FakeChat()
+
+    fake_client = FakeClient()
+
+    response = StorageChatAgent(llm_client=fake_client).chat(
+        StorageChatRequest(sessionId="demo", message="hello")
+    )
+
+    assert response.reply == "deepseek compatible reply"
+    assert response.data["llmMode"] == "openai"
+    assert fake_client.chat.completions.calls[0]["model"] == "deepseek-v4-flash"
+    assert fake_client.chat.completions.calls[0]["messages"][0]["role"] == "user"
