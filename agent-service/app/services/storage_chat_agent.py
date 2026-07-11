@@ -18,6 +18,9 @@ class StorageChatAgent:
 
     def chat(self, request: StorageChatRequest) -> StorageChatResponse:
         message = request.message.strip()
+        local_response = self._local_first_chat(request.sessionId, message)
+        if local_response:
+            return local_response
         if self._is_llm_enabled():
             return self._llm_chat(request)
         return self._fallback_chat(request.sessionId, message)
@@ -36,7 +39,7 @@ class StorageChatAgent:
             fallback.toolCalls.insert(0, StorageToolCall(
                 tool="llm_router",
                 status="success",
-                summary="OpenAI Responses API generated the final reply.",
+                summary="LLM generated the final reply.",
             ))
             return fallback
         except Exception as exc:
@@ -76,17 +79,47 @@ class StorageChatAgent:
         return OpenAI(**client_options)
 
     def _build_llm_prompt(self, message: str, fallback: StorageChatResponse) -> str:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return (
             "你是一个企业存储测试平台的AI Agent。"
             "你只能在能力范围内回答：测试任务、节点/样品/用例、性能指标、报告生成、当前时间和能力说明。"
             "创建任务、执行任务、生成报告必须要求用户确认。"
             "如果用户需求超出范围，必须礼貌说明暂不支持。"
             "\n\n"
+            f"当前服务器时间：{now}\n"
             f"用户消息：{message}\n"
             f"规则工具初判意图：{fallback.intent}\n"
             f"规则工具建议回答：{fallback.reply}\n"
             "请输出一段简洁中文回复。"
         )
+
+    def _local_first_chat(self, session_id: str, message: str):
+        if self._is_capability_question(message):
+            return StorageChatResponse(
+                sessionId=session_id,
+                reply=self._capability_reply(),
+                intent="CAPABILITY",
+                data={"llmMode": "local"},
+            )
+        if self._is_model_identity_question(message):
+            return StorageChatResponse(
+                sessionId=session_id,
+                reply=self._model_identity_reply(),
+                intent="MODEL_IDENTITY",
+                data={"llmMode": "local"},
+            )
+        if self._is_time_question(message):
+            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            return StorageChatResponse(
+                sessionId=session_id,
+                reply=f"当前服务器时间是 {now}。",
+                intent="GET_TIME",
+                toolCalls=[StorageToolCall(tool="get_current_time", status="success", summary=now)],
+                data={"llmMode": "local", "currentTime": now},
+            )
+        if any(keyword in message for keyword in ["机票", "订票", "外卖", "打车"]):
+            return self._unsupported(session_id)
+        return None
 
     def _fallback_chat(self, session_id: str, message: str) -> StorageChatResponse:
         lower = message.lower()
@@ -173,14 +206,22 @@ class StorageChatAgent:
     def _is_capability_question(self, message: str) -> bool:
         return any(keyword in message for keyword in ["你能做什么", "能做什么", "能力", "帮助", "help"])
 
+    def _is_model_identity_question(self, message: str) -> bool:
+        return any(keyword in message for keyword in ["你是什么模型", "什么模型", "哪个模型", "模型是谁", "模型名称"])
+
     def _is_time_question(self, message: str) -> bool:
-        return any(keyword in message for keyword in ["几点", "时间", "现在几点", "当前时间"])
+        return any(keyword in message for keyword in ["几月几号", "今天几号", "今天日期", "当前日期", "几点", "时间", "现在几点", "当前时间"])
 
     def _capability_reply(self) -> str:
         return (
             "我目前可以协助处理测试任务、节点/样品/用例查询、存储性能指标分析、报告生成、"
             "当前时间查询，以及说明能力边界。创建任务、执行任务、生成报告这类动作需要你确认。"
         )
+
+    def _model_identity_reply(self) -> str:
+        provider = os.getenv("OPENAI_BASE_URL", "OpenAI")
+        model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+        return f"当前配置的模型是 {model}，接口地址是 {provider}。我会优先处理测试平台相关问题；没有接入联网搜索工具时，不会承诺实时联网查询。"
 
     def _unsupported(self, session_id: str) -> StorageChatResponse:
         return StorageChatResponse(

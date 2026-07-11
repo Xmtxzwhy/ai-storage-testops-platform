@@ -6,7 +6,6 @@
         <h2>AI测管演示台</h2>
         <p>用自然语言生成测试任务，模拟节点执行，汇总结果并生成Excel报告。</p>
       </div>
-      <el-tag type="success">面试演示版</el-tag>
     </div>
 
     <el-card shadow="never" class="panel chat-panel">
@@ -49,7 +48,7 @@
           placeholder="和Agent对话，例如：CDM 顺序读最高的是哪个样品哪个版本？"
           @keyup.enter.native="sendChatMessage(null)"
         />
-        <el-button type="primary" icon="el-icon-s-promotion" :loading="loading.chat" @click="sendChatMessage(null)">
+        <el-button type="primary" :loading="loading.chat" @click="sendChatMessage(null)">
           发送
         </el-button>
       </div>
@@ -69,10 +68,10 @@
             placeholder="请输入测试需求，例如：Node-3 上挂了 Project-A Flash-X 256G FW-v2，跑 CDM clean"
           />
           <div class="button-row">
-            <el-button type="primary" icon="el-icon-magic-stick" :loading="loading.parse" @click="parseAgentText">
+            <el-button type="primary" :loading="loading.parse" @click="parseAgentText">
               解析需求
             </el-button>
-            <el-button icon="el-icon-refresh" @click="resetDemo">重置</el-button>
+            <el-button @click="resetDemo">重置</el-button>
           </div>
 
           <el-descriptions v-if="parsed" title="解析结果" :column="2" border size="small">
@@ -105,12 +104,12 @@
               </el-col>
               <el-col :span="6">
                 <el-form-item label="样品ID">
-                  <el-input-number v-model="taskForm.sampleId" :min="1" controls-position="right" />
+                  <el-input-number v-model="taskForm.sampleId" :min="1" :controls="false" />
                 </el-form-item>
               </el-col>
               <el-col :span="6">
                 <el-form-item label="节点ID">
-                  <el-input-number v-model="taskForm.nodeId" :min="1" controls-position="right" />
+                  <el-input-number v-model="taskForm.nodeId" :min="1" :controls="false" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
@@ -144,13 +143,13 @@
             </el-row>
           </el-form>
           <div class="button-row">
-            <el-button type="primary" icon="el-icon-plus" :loading="loading.createTask" @click="createTask">
+            <el-button type="primary" :loading="loading.createTask" @click="createTask">
               创建任务
             </el-button>
-            <el-button type="success" icon="el-icon-video-play" :disabled="!task.id" :loading="loading.runTask" @click="runTask">
+            <el-button type="success" :disabled="!task.id" :loading="loading.runTask" @click="runTask">
               模拟执行
             </el-button>
-            <el-button icon="el-icon-document" :disabled="!task.id" :loading="loading.results" @click="loadResults">
+            <el-button :disabled="!task.id" :loading="loading.results" @click="loadResults">
               拉取结果
             </el-button>
           </div>
@@ -209,13 +208,13 @@
             </el-row>
           </el-form>
           <div class="button-row">
-            <el-button type="primary" icon="el-icon-folder-add" :loading="loading.createReport" @click="createReport">
+            <el-button type="primary" :loading="loading.createReport" @click="createReport">
               创建报告
             </el-button>
-            <el-button type="success" icon="el-icon-data-analysis" :disabled="!report.id" :loading="loading.generateReport" @click="generateReport">
+            <el-button type="success" :disabled="!report.id" :loading="loading.generateReport" @click="generateReport">
               生成报告
             </el-button>
-            <el-button icon="el-icon-download" :disabled="!report.id || !report.excelFilePath" :loading="loading.downloadReport" @click="downloadReport">
+            <el-button :disabled="!report.id || !report.excelFilePath" :loading="loading.downloadReport" @click="downloadReport">
               下载Excel
             </el-button>
           </div>
@@ -254,7 +253,7 @@
             </el-form-item>
           </el-form>
           <div class="button-row">
-            <el-button type="primary" icon="el-icon-search" :loading="loading.metric" @click="queryMetric">
+            <el-button type="primary" :loading="loading.metric" @click="queryMetric">
               查询
             </el-button>
           </div>
@@ -772,6 +771,18 @@ export default {
 .task-form .el-input-number,
 .panel .el-select {
   width: 100%;
+}
+
+.storage-agent-page ::v-deep .el-tag__close,
+.storage-agent-page ::v-deep .el-input-number__decrease,
+.storage-agent-page ::v-deep .el-input-number__increase,
+.storage-agent-page ::v-deep .el-select__caret,
+.storage-agent-page ::v-deep .el-input__suffix {
+  display: none;
+}
+
+.storage-agent-page ::v-deep .el-input-number .el-input__inner {
+  text-align: left;
 }
 
 .preview-table {

@@ -17,7 +17,7 @@ def test_capability_question_returns_agent_boundary(monkeypatch):
     assert response.intent == "CAPABILITY"
     assert response.needConfirm is False
     assert "测试任务" in response.reply
-    assert response.data["llmMode"] == "fallback"
+    assert response.data["llmMode"] == "local"
 
 
 def test_unsupported_request_is_rejected(monkeypatch):
@@ -85,7 +85,7 @@ def test_openai_key_marks_response_as_openai_ready(monkeypatch):
     fake_client = FakeClient()
 
     response = StorageChatAgent(llm_client=fake_client).chat(
-        StorageChatRequest(sessionId="demo", message="你能做什么？")
+        StorageChatRequest(sessionId="demo", message="hello")
     )
 
     assert response.reply == "我是通过LLM生成的回答。"
@@ -103,10 +103,9 @@ def test_missing_openai_dependency_falls_back(monkeypatch):
             raise ModuleNotFoundError("No module named 'openai'")
 
     response = MissingDependencyAgent().chat(
-        StorageChatRequest(sessionId="demo", message="你能做什么？")
+        StorageChatRequest(sessionId="demo", message="CDM 顺序读最高的是哪个样品哪个版本？")
     )
 
-    assert response.intent == "CAPABILITY"
     assert response.data["llmMode"] == "fallback"
     assert response.toolCalls[0].tool == "llm_router"
     assert response.toolCalls[0].status == "failed"
@@ -171,3 +170,38 @@ def test_custom_base_url_uses_chat_completions(monkeypatch):
     assert response.data["llmMode"] == "openai"
     assert fake_client.chat.completions.calls[0]["model"] == "deepseek-v4-flash"
     assert fake_client.chat.completions.calls[0]["messages"][0]["role"] == "user"
+
+
+def test_time_question_is_answered_locally_without_task_action(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("AGENT_LLM_ENABLED", "true")
+
+    class FailingClient:
+        def __getattr__(self, name):
+            raise AssertionError("time questions should not call the LLM")
+
+    response = StorageChatAgent(llm_client=FailingClient()).chat(
+        StorageChatRequest(sessionId="demo", message="现在几月几号")
+    )
+
+    assert response.intent == "GET_TIME"
+    assert response.needConfirm is False
+    assert response.actions == []
+    assert response.toolCalls[0].tool == "get_current_time"
+
+
+def test_model_identity_question_is_answered_locally_without_task_action(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("AGENT_LLM_ENABLED", "true")
+
+    class FailingClient:
+        def __getattr__(self, name):
+            raise AssertionError("model identity questions should not call the LLM")
+
+    response = StorageChatAgent(llm_client=FailingClient()).chat(
+        StorageChatRequest(sessionId="demo", message="你是什么模型")
+    )
+
+    assert response.intent == "MODEL_IDENTITY"
+    assert response.needConfirm is False
+    assert response.actions == []
